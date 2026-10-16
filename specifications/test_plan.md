@@ -780,3 +780,17 @@ Avant de lancer des simulations massives, vérifier que :
 - Les configurations et les graines aléatoires peuvent être enregistrées pour reproduire les résultats.
 
 L'équilibrage du jeu devra ensuite être étudié séparément à partir de simulations suffisamment nombreuses et de statistiques explicites.
+
+## 16. Tests des agents et des campagnes
+
+Les tests des agents et simulations restent courts et déterministes. Ils vérifient :
+
+- la reproductibilité des choix aléatoires par graine de partie et de joueur, sans dépendre de l'ordre des campagnes ;
+- que les agents ne choisissent que parmi les actions légales et ne reçoivent pas les cartes secrètes adverses ni le jeton proposé caché ;
+- que l'échange de messages n'altère ni les actions ni l'état du moteur, y compris lorsque les numéros de message sont réutilisés entre propositions ;
+- l'enregistrement d'une ligne par partie et par joueur-manche, des échecs sans résultat fictif, des métriques de tours/manches et des sorties JSON/CSV/Markdown ;
+- les dénominateurs, intervalles de Wilson, estimations des moyennes, quantiles et seuils configurables d'élimination précoce ;
+- la rotation du premier joueur, la séparation par mode, variante, carte et profil ainsi que les égalités sans vainqueur ordinaire ;
+- l'absence de mutation de l'état interne par les stratégies.
+
+Les milliers de simulations sont exécutées uniquement par la CLI `py -m simulation`; elles ne font jamais partie de pytest.

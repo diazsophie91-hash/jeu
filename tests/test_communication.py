@@ -99,6 +99,26 @@ def test_t10_messages_are_bound_to_the_correct_proposal_and_nonparticipants_cann
         channel.send("a", CommunicationIntent(CommunicationKind.SPONTANEOUS, "Non autorisé."))
 
 
+def test_t10_question_replies_with_reused_sequence_are_scoped_to_the_current_proposal():
+    game, _ = build_game(mode=GameMode.LAST_SURVIVOR, order=["a", "b", "c"],
+                         hands={"a": ["rouge"], "b": ["bleu"], "c": ["vert"]},
+                         bag=["jaune", "rouge"])
+    channel = CommunicationChannel(game)
+    propose(game)
+    first_question = channel.send("b", CommunicationIntent(CommunicationKind.QUESTION, "Couleur ?"))
+    channel.send("a", CommunicationIntent(CommunicationKind.RESPONSE, "Rouge.", first_question.sequence))
+    game.submit(AcceptGift(), player_id="b")
+    game.submit(ChooseRecipient("c"), player_id="b")
+    game.submit(ProposeGift("b-t0"), player_id="b")
+    second_question = channel.send("c", CommunicationIntent(CommunicationKind.QUESTION, "Encore ?"))
+    second_answer = channel.send("b", CommunicationIntent(CommunicationKind.RESPONSE, "Bleu.",
+                                                             second_question.sequence))
+    assert first_question.sequence == second_question.sequence == 1
+    assert first_question.proposal_id != second_question.proposal_id
+    assert second_answer.reply_to == second_question.sequence
+    assert second_answer.proposal_id == second_question.proposal_id
+
+
 def test_t10_configured_truthful_and_deceptive_agent_claims_use_only_donor_private_view():
     game, _ = build_game(mode=GameMode.LAST_SURVIVOR, order=["a", "b"],
                          hands={"a": ["rouge"], "b": ["bleu"]}, bag=["jaune"])

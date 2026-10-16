@@ -2,8 +2,12 @@
 
 from .communication import CommunicationChannel, CommunicationIntent, CommunicationKind, Message
 from .strategies import (Agent, DecisionStrategy, CommunicationStrategy, ScriptedDecision,
-                         ScriptedCommunication, SilentCommunication, ColorClaimCommunication)
+                         ScriptedCommunication, SilentCommunication, ColorClaimCommunication,
+                         RandomDecision, CautiousDecision, AlwaysAcceptDecision, AlwaysRefuseDecision,
+                         ReferenceDecision)
 
 __all__ = ["CommunicationChannel", "CommunicationIntent", "CommunicationKind", "Message",
            "Agent", "DecisionStrategy", "CommunicationStrategy", "ScriptedDecision",
-           "ScriptedCommunication", "SilentCommunication", "ColorClaimCommunication"]
+           "ScriptedCommunication", "SilentCommunication", "ColorClaimCommunication",
+           "RandomDecision", "CautiousDecision", "AlwaysAcceptDecision", "AlwaysRefuseDecision",
+           "ReferenceDecision"]

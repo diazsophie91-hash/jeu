@@ -1,6 +1,7 @@
 """Composable deterministic decision and message strategies for agent pilots."""
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -45,6 +46,95 @@ class ScriptedDecision:
             return next((a for a in legal_actions if a.token_id == preferred), legal_actions[0])
         wanted = AcceptGift if self.accept else RefuseGift
         return next((a for a in legal_actions if isinstance(a, wanted)), legal_actions[0])
+
+
+@dataclass
+class RandomDecision:
+    """Uniform legal-action policy with a private, explicitly seeded RNG."""
+    seed: int = 0
+    name: str = "random"
+
+    def __post_init__(self):
+        self._rng = random.Random(self.seed)
+
+    def with_seed(self, seed: int) -> "RandomDecision":
+        return RandomDecision(seed)
+
+    def choose_action(self, view, legal_actions, messages=()):
+        if not legal_actions:
+            raise RuntimeError(f"Aucune action légale pour {view.player_id}.")
+        return legal_actions[self._rng.randrange(len(legal_actions))]
+
+
+@dataclass(frozen=True, slots=True)
+class AlwaysAcceptDecision:
+    name: str = "always_accept"
+
+    def choose_action(self, view, legal_actions, messages=()):
+        return next((action for action in legal_actions if isinstance(action, AcceptGift)), legal_actions[0])
+
+
+@dataclass(frozen=True, slots=True)
+class AlwaysRefuseDecision:
+    name: str = "always_refuse"
+
+    def choose_action(self, view, legal_actions, messages=()):
+        return next((action for action in legal_actions if isinstance(action, RefuseGift)), legal_actions[0])
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceDecision:
+    """Fixed reference policy: legal-order choices and refuse whenever possible."""
+    name: str = "reference"
+
+    def choose_action(self, view, legal_actions, messages=()):
+        if not legal_actions:
+            raise RuntimeError(f"Aucune action légale pour {view.player_id}.")
+        if isinstance(legal_actions[0], ChooseRecipient):
+            ids = tuple(player.id for player in view.public.players)
+            start = ids.index(view.player_id)
+            for offset in range(1, len(ids) + 1):
+                wanted = ids[(start + offset) % len(ids)]
+                candidate = next((action for action in legal_actions
+                                  if isinstance(action, ChooseRecipient)
+                                  and action.recipient_id == wanted), None)
+                if candidate is not None:
+                    return candidate
+        if isinstance(legal_actions[0], (AcceptGift, RefuseGift)):
+            refusal = next((action for action in legal_actions if isinstance(action, RefuseGift)), None)
+            if refusal is not None:
+                return refusal
+        return legal_actions[0]
+
+
+@dataclass(frozen=True, slots=True)
+class CautiousDecision:
+    """Avoid own known defeat collections using only the player's private view."""
+    name: str = "cautious"
+
+    def choose_action(self, view, legal_actions, messages=()):
+        if not legal_actions:
+            raise RuntimeError(f"Aucune action légale pour {view.player_id}.")
+        if isinstance(legal_actions[0], ProposeGift):
+            from rules.cards import condition_matches
+
+            safe = []
+            for action in legal_actions:
+                token = next(item for item in view.hand if item.id == action.token_id)
+                counts = {color: sum(item.color == color for item in view.hand if item.id != token.id)
+                          for color in {item.color for item in view.hand}}
+                if not any(condition_matches(condition, counts) for condition in view.card.defeat_conditions):
+                    safe.append(action)
+            if safe:
+                return safe[0]
+        if isinstance(legal_actions[0], (AcceptGift, RefuseGift)):
+            # The offered token is deliberately hidden from a recipient. If a
+            # refusal is legal, this cautious profile declines the unknown gift;
+            # when forced to accept, it has no legal alternative.
+            refusal = next((action for action in legal_actions if isinstance(action, RefuseGift)), None)
+            if refusal is not None:
+                return refusal
+        return legal_actions[0]
 
 
 @dataclass(frozen=True, slots=True)

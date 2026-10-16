@@ -66,7 +66,8 @@ class CommunicationChannel:
         if intent.kind is CommunicationKind.RESPONSE:
             if author_id != donor or intent.reply_to is None:
                 raise ValueError("Une réponse doit être envoyée par le donneur en réponse à une question.")
-            question = next((m for m in self._messages if m.sequence == intent.reply_to), None)
+            question = next((m for m in self._messages
+                             if m.sequence == intent.reply_to and m.proposal_id == proposal_id), None)
             if question is None or question.proposal_id != proposal_id or question.kind is not CommunicationKind.QUESTION:
                 raise ValueError("La réponse doit viser une question de cette proposition.")
         elif intent.reply_to is not None:

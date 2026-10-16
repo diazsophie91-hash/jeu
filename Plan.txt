@@ -20,7 +20,9 @@ Tester les cas normaux et les situations limites : grand sac vide, victoire imm�
 
 
 4. Ajouter les agents et les simulations
-Commencer par des agents simples et reproductibles, puis lancer des milliers de parties pour mesurer la durée, les éliminations précoces, la fréquence des victoires et l’équilibre des cartes et du jeu.
+Réalisé localement : le moteur comprend des agents déterministes, aléatoires reproductibles, prudents, d’acceptation/refus et des profils de communication indépendants. `py -m simulation` lance des campagnes avec rapports JSON, CSV et Markdown, métriques de partie/joueur/manche, graines, erreurs et intervalles descriptifs.
+
+Vérifications enregistrées : 3 000 parties de référence (1 000 par mode, 0 échec), 4 000 parties de comparaison de variantes (0 échec), 2 750 parties de profils agents/communication (0 échec) et 1 000 parties d’analyse exploratoire des cartes (0 échec). Les résultats et limites sont conservés dans `reports/simulations/`; les paquets de cartes sont explicitement expérimentaux. Ils ne constituent pas une validation d’équilibrage des règles officielles.
 
 
 
@@ -55,10 +57,15 @@ racine du dépôt/ (jeu en local et sur github)
 │   └── setup.py
 ├── agents/
 │   ├── communication.py
-│   └── strategies.py
+│   ├── strategies.py
+│   └── README.md
 ├── simulation/
+│   ├── __main__.py
+│   ├── experiments.py
+│   ├── reporting.py
 │   ├── runner.py
-│   └── statistics.py
+│   ├── statistics.py
+│   └── README.md
 └── tests/
     ├── test_setup.py
     ├── test_gifts.py
