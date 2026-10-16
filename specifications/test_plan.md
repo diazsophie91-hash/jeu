@@ -33,8 +33,10 @@ Pour vérifier une règle, le test doit pouvoir définir directement :
 - Le contenu de leurs sacs.
 - Le contenu du sac commun.
 - Les cartes secrètes.
-- La variante active.
 - Le mode de jeu.
+- La variante active.
+- Le contenu et la compatibilité des cartes secrètes avec le mode sélectionné.
+- La réserve de cartes et sa disponibilité, si la distribution des cartes est gérée par le moteur.
 - Les scores et compteurs initiaux.
 - Le résultat attendu.
 
@@ -73,7 +75,8 @@ Préparer un scénario dans lequel la première collection tirée satisfait une 
 Vérifier que :
 - Les trois jetons sont remis dans le sac commun.
 - Une nouvelle collection de trois jetons est tirée.
-- La collection invalide ne provoque pas d'élimination.
+- La vérification de la collection est interne : aucune condition ni carte secrète n'est révélée publiquement.
+- La collection invalide ne provoque pas d'élimination et ne modifie pas le statut du joueur.
 - Aucun point n'est attribué.
 - La préparation ne déclare aucune victoire.
 
@@ -81,7 +84,7 @@ Vérifier que :
 
 Faire en sorte qu'une collection initiale déclenche normalement une condition de défaite ou de victoire.
 
-Vérifier que cette condition sert uniquement à recommencer le tirage initial et ne modifie pas le statut du joueur.
+Vérifier que cette condition sert uniquement à recommencer le tirage initial, ne révèle pas la carte ou ses conditions, et ne modifie ni le statut du joueur ni le résultat de la partie. Répéter pour une condition de défaite en modes A et C, puis pour une condition de défaite et une condition de victoire en mode B.
 
 ### T05 — Conservation du nombre total de jetons
 
@@ -101,10 +104,10 @@ Le destinataire accepte un cadeau.
 
 Vérifier que :
 - Le jeton est révélé conformément aux règles.
-- Le jeton quitte le donneur.
-- Le jeton rejoint le destinataire.
-- Le nombre total de jetons reste constant.
-- Les conditions applicables au destinataire sont vérifiées.
+- Le jeton quitte son emplacement temporaire dans la main du donneur et rejoint le sac personnel du destinataire.
+- Le nombre total de jetons reste constant et le jeton ne figure qu'à un seul emplacement.
+- En mode Objectif secret, la victoire est vérifiée en premier après réception ; si elle est satisfaite, la carte complète est révélée, la partie s'arrête et aucune vérification ni attribution ultérieure liée à cette action n'a lieu.
+- Si aucune victoire immédiate n'a été déclarée, les conditions de défaite du destinataire sont vérifiées.
 
 ### T08 — Refus d'un cadeau lorsque le sac commun n'est pas vide
 
@@ -126,9 +129,13 @@ Le destinataire tente de refuser un cadeau alors que le sac commun est vide.
 Vérifier que :
 - Le refus est impossible.
 - Le jeton proposé est révélé.
-- Le jeton est transféré au destinataire.
+- Le jeton est transféré au destinataire sans retour préalable dans le sac du donneur.
 - Aucun tirage de remplacement n'est effectué.
 - Le jeton n'est jamais compté simultanément dans deux emplacements.
+- La procédure de contrôle du destinataire est exactement celle d'une acceptation normale : en mode Objectif secret, contrôler la victoire en premier, puis la défaite seulement si aucune victoire immédiate n'est déclarée.
+- Si le destinataire gagne immédiatement, la résolution s'arrête sans contrôle, attribution ou succession ultérieure.
+- Sinon, les éliminations, la règle terminale d'égalité, les points et le compteur de manche sont traités comme pour une acceptation, y compris l'exception où l'action initiale élimine directement tous les joueurs encore en jeu.
+- La succession ne démarre qu'après la résolution complète et après vérification des fins immédiates.
 
 ### T10 — Annonce facultative du donneur
 
@@ -183,13 +190,11 @@ Vérifier que :
 
 ### T16 — Vérification de la condition du donneur après retrait
 
-Exécuter le même scénario avec les deux configurations :
-- Vérification de la condition de défaite après retrait : activée.
-- Vérification de la condition de défaite après retrait : désactivée.
+Comparer les deux configurations — contrôle après retrait activé et désactivé — dans chacun des trois modes A — Dernier survivant, B — Objectif secret et C — Points et manches, avec des états initiaux aussi similaires que possible.
 
-Vérifier que le moteur applique exactement la configuration sélectionnée.
+Lorsque l'option est activée, vérifier que la condition est évaluée immédiatement après le retrait et avant la décision du destinataire. Si le donneur est éliminé, sa carte complète est révélée et ses autres jetons encore présents dans son sac rejoignent le sac commun, mais le jeton proposé reste temporaire, la proposition reste en cours et le destinataire peut encore décider.
 
-Dans les deux cas, le retrait du jeton par le donneur ne peut pas déclencher sa condition de victoire personnelle.
+Lorsque l'option est désactivée, vérifier que cette vérification n'a pas lieu à ce moment. Dans les deux cas, le retrait du jeton ne déclenche pas la condition de victoire personnelle du donneur. Vérifier également que le contrôle de défaite du donneur n'est pas répété plus tard pendant la même résolution.
 
 ## 6. Tests des objectifs secrets
 
@@ -199,21 +204,21 @@ Créer un objectif secret dont la condition est satisfaite après la réception 
 
 Vérifier que :
 - La carte secrète complète du vainqueur est révélée.
-- La victoire est déclarée.
-- La partie s'arrête immédiatement.
+- La victoire est déclarée immédiatement.
+- La résolution s'arrête : aucune vérification de défaite, attribution de point, succession ou autre conséquence ultérieure liée à cette action n'est appliquée.
 - Aucune nouvelle action normale ne peut commencer.
 
 ### T18 — Victoire après un tirage consécutif à un refus
 
 Créer un objectif qui devient satisfait après le tirage du sac commun effectué à la suite d'un refus.
 
-Vérifier que l'objectif est contrôlé après le tirage et que la victoire est correctement déclarée si la condition est satisfaite.
+Vérifier que l'objectif est contrôlé après le tirage et, si la condition est satisfaite, que la carte complète est révélée, la victoire est déclarée immédiatement et aucune vérification, attribution de point ou succession ultérieure liée à cette action n'a lieu.
 
-### T19 — Victoire après un tirage nécessaire au rejeu en variante A
+### T19 — Victoire après un tirage nécessaire au rejeu du responsable en variante A
 
-Configurer un objectif secret atteint par un tirage nécessaire au rejeu.
+Configurer un objectif secret atteint par le tirage nécessaire au rejeu du responsable en variante A.
 
-Vérifier que les conditions applicables sont contrôlées après ce tirage, conformément à la règle retenue pour la variante A.
+Vérifier qu'après ce tirage, en mode Objectif secret, la condition de victoire est contrôlée en premier. Si elle est satisfaite, la carte complète est révélée et la partie s'arrête immédiatement ; sinon, la condition de défaite est contrôlée. Si le joueur survit sans gagner, il joue immédiatement son tour.
 
 ### T20 — Absence de déclenchement au retrait d'un jeton
 
@@ -233,7 +238,7 @@ Tester des cartes dont les conditions de victoire et de défaite :
 - Sont compatibles.
 - Peuvent être satisfaites simultanément par une même collection.
 
-Vérifier que la carte contradictoire est détectée et signalée comme invalide.
+Vérifier que la carte contradictoire est détectée et signalée comme invalide. Vérifier aussi la compatibilité du type de carte avec le mode : une carte de Dernier survivant ou de Points et manches ne porte pas de condition individuelle de victoire ; une carte ordinaire d'Objectif secret porte une condition de défaite et une condition de victoire. Tester les cartes incomplètes ou contenant des types/couleurs/paramètres inconnus.
 
 Le système doit aussi permettre de tester les familles d'objectifs dont les seuils restent expérimentaux, sans inventer leurs paramètres.
 
@@ -259,19 +264,17 @@ Vérifier que ce joueur doit rejouer immédiatement.
 
 ### T26 — Variante A : donneur éliminé, destinataire survivant
 
-Déclencher l'élimination du donneur après le retrait d'un jeton, tout en laissant le destinataire en jeu.
+Activer le contrôle de la condition de défaite du donneur après retrait et faire éliminer le donneur, tout en laissant le destinataire en jeu.
 
-Vérifier que le destinataire devient le joueur actif.
+Vérifier que la proposition reste en cours et que le destinataire prend sa décision. Après la résolution complète du cadeau, si le destinataire survit sans gagner, il devient le joueur actif selon la règle établie. Le jeton proposé reste suivi comme emplacement temporaire jusqu'à la résolution.
 
 ### T27 — Variante A : rejeu sans jeton personnel
 
-Le joueur qui doit rejouer possède un sac personnel vide et le sac commun contient un jeton.
+Le responsable qui doit rejouer possède un sac personnel vide et le sac commun contient un jeton.
 
-Vérifier qu'il tire un jeton, puis que les conditions applicables sont contrôlées.
+Vérifier qu'il tire un jeton et l'ajoute à sa collection. En mode Objectif secret, la victoire est vérifiée en premier ; si elle n'est pas obtenue, vérifier la défaite. Si le joueur survit sans gagner, il joue immédiatement son tour. Si sa propre pioche le fait éliminer, sa carte est révélée et aucun autre joueur ne reçoit de point pour cette élimination.
 
-Répéter le scénario avec un sac commun vide.
-
-Vérifier que le joueur est alors éliminé, révèle sa carte secrète complète et que la succession continue.
+Répéter le scénario avec un sac commun vide. Vérifier que le joueur est éliminé sans pioche, révèle sa carte secrète complète, ne rapporte aucun point à un autre joueur et que la succession continue après sa position.
 
 ### T28 — Variante A : visibilité du tirage de rejeu
 
@@ -478,15 +481,25 @@ Vérifier que le moteur refuse l'action et conserve le résultat final.
 
 Vérifier que les événements sont enregistrés dans l'ordre de résolution et que les informations secrètes ne sont pas automatiquement exposées dans l'affichage public.
 
-### T55 — Validation de la configuration
+### T55 — Validation de la configuration et du paquet de cartes
 
 Tester les configurations :
 - Valides.
 - Incomplètes.
 - Contradictoires.
 - Comportant des seuils ou des paramètres non pris en charge.
+- Avec une carte secrète incompatible avec le mode sélectionné.
+- Avec une carte dont les conditions victoire/défaite se contredisent.
+- Avec une couleur, un type de condition ou un paramètre inconnu.
+- Avec trop peu de cartes disponibles pour le nombre de joueurs, lorsque le moteur gère la distribution.
+- Avec une réserve de cartes dont la composition ne respecte pas sa configuration, lorsque le moteur gère le paquet.
+- Avec un nombre total de jetons inférieur à trois fois le nombre de joueurs.
+- Avec une carte attribuée pour laquelle aucune collection valide de trois jetons n'est possible à partir du stock.
+- Avec un stock et des cartes ne permettant aucune attribution complète de collections initiales valides à tous les joueurs.
 
-Le moteur doit signaler clairement une configuration invalide plutôt que d'inventer un comportement.
+La conception de référence prévoit deux exemplaires de chaque type de condition de défaite ; tester cette propriété si le paquet réel est géré par le moteur, sans supposer que les seuils ou les cartes candidates sont définitifs. Si les cartes sont injectées de l'extérieur pour un scénario de test, la disponibilité physique du paquet est hors périmètre, mais leur structure et leur compatibilité restent testées.
+
+Le moteur doit signaler clairement une configuration invalide plutôt que d'inventer un comportement. Vérifier aussi qu'une tentative de mise en place qui devient impossible pour un joueur restant s'arrête avec une erreur explicite au lieu de boucler indéfiniment, sans révéler les cartes et sans déclarer victoire ou élimination.
 
 ## 11. Tests de robustesse
 
@@ -577,30 +590,144 @@ Vérifier que :
 
 ### T66 — Élimination du donneur avant la décision du destinataire
 
-Activer la variante de vérification de la condition de défaite du donneur après retrait.
+Activer la variante transversale de vérification de la condition de défaite du donneur après retrait. Exécuter les variantes de mode A, B et C.
 
-Préparer une situation dans laquelle le retrait du jeton déclenche sa condition de défaite.
+Préparer une situation dans laquelle le retrait du jeton déclenche la condition de défaite du donneur.
 
 Vérifier que :
-- La condition est vérifiée avant la décision du destinataire.
-- Le donneur est éliminé et révèle sa carte secrète complète.
-- La proposition de cadeau reste en cours.
-- Le destinataire peut encore accepter ou refuser.
+- La condition est contrôlée immédiatement après le retrait et avant la décision du destinataire.
+- Le donneur est éliminé une seule fois et révèle sa carte secrète complète.
+- Les autres jetons de son sac personnel rejoignent le sac commun.
+- Le jeton proposé reste dans l'emplacement temporaire unique et n'est pas remis au sac commun avec les autres jetons.
+- La proposition reste en cours et le destinataire peut encore accepter ou refuser.
 - L'élimination du donneur n'est pas annulée par un refus.
+- Le contrôle n'est pas répété plus tard pendant la même résolution.
 
-### T67 — Résolution du cadeau après l'élimination du donneur
+### T67 — Acceptation du cadeau après l'élimination du donneur
 
-Reprendre le scénario T66 et tester séparément l'acceptation et le refus.
+Reprendre le scénario T66 et faire accepter le cadeau. Vérifier que le jeton temporaire est révélé puis transféré au destinataire, que les conditions applicables sont vérifiées selon leur ordre, que les cartes des joueurs éliminés sont révélées et que la succession n'est déterminée qu'après la résolution complète. Tester les variantes où le destinataire survit, est éliminé, ou gagne immédiatement en mode Objectif secret.
 
-Vérifier que le cadeau est résolu selon les règles normales, que les jetons ne sont ni perdus ni dupliqués et que le joueur actif suivant est déterminé uniquement après la résolution complète.
-
-Vérifier également les règles de points applicables si le destinataire est éliminé pendant cette même résolution.
+Tester également les points applicables si le destinataire est éliminé pendant cette action, en distinguant l'action initiale qui élimine directement tout le monde d'une chaîne ultérieure en variante B.
 
 ### T68 — Variante désactivée
 
 Répéter le scénario avec la vérification de la condition du donneur après retrait désactivée.
 
 Vérifier que cette vérification n'a pas lieu et que le cadeau suit son déroulement normal.
+
+### T69 — Retour des jetons restants au sac commun après élimination
+
+Éliminer un joueur dont le sac personnel contient encore plusieurs jetons.
+
+Vérifier que :
+- Sa carte secrète complète est révélée.
+- Tous les jetons encore présents dans son sac personnel sont remis dans le sac commun.
+- Aucun jeton n'est perdu ni dupliqué.
+- Un jeton déjà transféré à un autre joueur ne retourne au sac commun que si ce destinataire est lui aussi éliminé et que le jeton est alors dans son sac personnel.
+- Un jeton temporairement conservé dans la main du donneur pour une proposition en cours reste dans l'état temporaire ; il n'est pas traité comme un jeton restant dans son sac personnel.
+
+### T70 — Successeur sans jeton en variante A, sac commun non vide
+
+Après l'élimination du responsable, désigner un successeur vivant dont le sac personnel est vide alors que le sac commun contient au moins un jeton.
+
+Vérifier que le successeur pioche un jeton et l'ajoute à sa collection. Tester les deux options de visibilité prévues. En mode Objectif secret, vérifier d'abord la victoire, puis la défaite si aucune victoire n'est déclarée. S'il survit sans gagner, il joue immédiatement son tour ; s'il est éliminé par sa propre pioche, aucun autre joueur ne reçoit de point et la succession continue après sa position.
+
+### T71 — Successeur sans jeton en variante A, sac commun vide
+
+Après l'élimination du responsable, désigner un successeur vivant dont le sac personnel est vide et le sac commun également vide.
+
+Vérifier que le successeur est éliminé sans pioche, révèle sa carte secrète complète, ne rapporte aucun point à un autre joueur et que la succession continue après sa position, sauf si une fin immédiate s'applique.
+
+### T72 — Succession en variante B après l'auto-élimination du donneur
+
+Activer le contrôle de la condition de défaite du donneur après retrait, faire éliminer le donneur puis laisser le destinataire en jeu.
+
+Vérifier qu'après la résolution du cadeau et en l'absence de fin immédiate, le destinataire devient le joueur actif. Tester séparément le cas où le donneur et le destinataire sont éliminés lors de la même action initiale : si d'autres joueurs restent, la succession repart après la position du destinataire.
+
+### T73 — Priorités après chaque élimination forcée en variante B
+
+Créer une chaîne où les successeurs sans jeton sont éliminés successivement. Tester au moins ces scénarios :
+- L'élimination forcée finale ne laisse aucun joueur : égalité terminale prioritaire, aucun point ni bonus pour la dernière élimination, conservation des points précédemment acquis.
+- Une élimination forcée non terminale fait atteindre le seuil de manche : la manche s'arrête avant une nouvelle étape de succession.
+- Le seuil n'est pas atteint et un seul joueur reste : le dernier survivant gagne selon le mode, avec bonus de manche en mode Points et manches.
+- La chaîne continue lorsqu'aucune de ces conditions de fin n'est satisfaite.
+
+### T74 — Égalité au score maximal à la fin normale de C2
+
+Faire atteindre le seuil de points pendant une manche ou grâce à son bonus, puis terminer cette manche avec plusieurs joueurs à égalité au score total le plus élevé.
+
+Vérifier que ces joueurs partagent la victoire. Ne pas confondre ce résultat avec une égalité terminale sans vainqueur causée par l'élimination de tous les joueurs.
+
+### T75 — Compteur d'éliminations créditées en mode Points et manches
+
+Vérifier que le compteur augmente exactement lorsqu'une élimination d'adversaire est attribuée et rapporte un point, y compris si le responsable est éliminé lors de la même action ou pendant une chaîne B non terminale.
+
+Vérifier qu'il n'augmente pas pour l'auto-élimination, pour l'élimination causée par la propre pioche de rejeu du joueur, ni pour la dernière élimination qui produit une égalité terminale. Vérifier que l'action initiale qui élimine directement tous les joueurs ne rapporte ni point ni incrément de compteur.
+
+### T76 — Confidentialité des informations sur le sac commun
+
+Préparer une situation où le destinataire connaît les couleurs ou types susceptibles de se trouver dans le sac commun, sans en connaître la composition exacte restante.
+
+Vérifier que le moteur et l'interface n'exposent pas la composition exacte. Ne pas étendre aux autres joueurs la connaissance explicitement attribuée au destinataire, sauf règle supplémentaire validée.
+
+### T77 — Priorité entre l'auto-élimination du donneur et la victoire secrète du destinataire
+
+En mode Objectif secret, activer le contrôle de défaite du donneur après retrait. Configurer le don de façon que le retrait élimine le donneur et que l'acceptation du cadeau satisfasse ensuite la condition de victoire du destinataire.
+
+Vérifier que :
+- Le donneur est éliminé avant la décision, sa carte est révélée et ses jetons personnels restants rejoignent le sac commun.
+- Le jeton proposé reste disponible dans la proposition et peut être accepté.
+- Après transfert, la condition de victoire du destinataire est contrôlée en premier parmi les conditions du destinataire.
+- La victoire du destinataire révèle toute sa carte et arrête immédiatement la résolution ; aucune vérification, attribution de point ni succession ultérieure n'est appliquée après ce déclencheur de victoire.
+- L'élimination du donneur déjà résolue n'est pas annulée rétroactivement.
+
+Répéter avec la variante de contrôle du donneur désactivée : le contrôle lié au retrait ne doit pas être effectué, mais la victoire autorisée du destinataire doit toujours fonctionner.
+
+### T78 — Configuration d'essai de référence non définitive
+
+Configurer quatre couleurs, au maximum huit joueurs et quarante jetons au total. Avec huit joueurs, vérifier que vingt-quatre jetons sont distribués lors de la mise en place initiale et que les jetons restants demeurent dans le sac commun.
+
+Vérifier que ces valeurs proviennent de la configuration du scénario, ne sont pas codées en dur comme valeurs obligatoires et ne sont jamais présentées comme des paramètres définitifs. Répéter avec d'autres configurations valides.
+
+### T79 — Départage du premier joueur
+
+Tester les deux méthodes prévues : accord du groupe et personne ayant reçu un cadeau réel le plus récemment.
+
+Lorsque plusieurs personnes sont à égalité sur le critère du cadeau reçu le plus récemment, vérifier que la procédure demande une décision par accord du groupe au lieu de départager automatiquement selon une règle inventée. Si le moteur ne gère pas les décisions humaines de mise en place, vérifier seulement que ce cas est explicitement exposé comme une décision à fournir en entrée.
+
+### T80 — Victoire après le tirage d’un successeur sans jeton en variante A
+
+Éliminer le responsable du rejeu de la variante A afin que la succession désigne un joueur encore en jeu dont le sac personnel est vide, tandis que le sac commun contient au moins un jeton. Configurer son objectif secret pour que le jeton tiré satisfasse sa condition de victoire.
+
+Vérifier que le successeur tire un jeton, que le moteur contrôle d’abord sa condition de victoire, qu’en cas de victoire sa carte complète est révélée et que la partie s’arrête immédiatement sans contrôle de défaite ni action ultérieure. Vérifier également que cette victoire n’est pas contrôlée avant le tirage et que, si aucune victoire n’est satisfaite, la condition de défaite est contrôlée ensuite.
+
+### T81 — Refus après élimination préalable du donneur
+
+Reprendre le scénario T66 avec un sac commun contenant au moins un jeton au moment où le destinataire décide, puis faire refuser le cadeau.
+
+Vérifier que :
+- Le jeton proposé reste temporaire jusqu'à la décision, puis est ajouté au sac commun sans être révélé.
+- Le jeton proposé est ajouté au sac commun avant le tirage du destinataire.
+- Le destinataire tire un jeton au hasard dans le sac commun ainsi augmenté ; le jeton proposé peut donc être celui qui est tiré.
+- Le jeton tiré quitte le sac commun et rejoint le sac personnel du destinataire ; aucun jeton n'est perdu ni dupliqué.
+- La visibilité du jeton tiré suit la variante activée. Si le jeton proposé est celui qui est tiré, sa visibilité dépend donc du résultat du tirage et de cette variante.
+- En mode Objectif secret, la condition de victoire du destinataire est vérifiée en premier après la pioche ; si elle n'est pas satisfaite, sa condition de défaite est contrôlée.
+- En mode Points et manches, si la pioche élimine le destinataire, appliquer l'attribution du point au donneur initial selon la règle de score, même si celui-ci est déjà éliminé, sauf si l'action initiale élimine directement tous les joueurs encore en jeu.
+- La succession n'est déterminée qu'après la résolution complète, sous réserve d'une fin immédiate.
+
+
+### T82 — Validation de la mise en place et confidentialité des cartes
+
+Tester les configurations de départ suivantes :
+- Le sac contient moins de trois jetons par joueur.
+- Une carte assignée n'admet aucune collection valide de trois jetons dans le stock configuré.
+- Chaque carte admet individuellement une collection valide, mais aucune attribution complète de collections valides n'est possible pour tous les joueurs avec le stock disponible.
+- La configuration est valide et permet une mise en place complète.
+
+Vérifier que les configurations impossibles sont rejetées avec un diagnostic explicite avant le début du jeu. Pour une mise en place valide, faire tirer à un joueur une collection qui satisfait une condition de défaite ou, en mode Objectif secret, une condition de victoire.
+
+Vérifier que les trois jetons sont remis dans le sac commun et que trois nouveaux jetons sont tirés, sans révéler la carte ni les conditions, sans éliminer le joueur, sans déclarer de victoire et sans attribuer de point. Vérifier qu'une tentative de mise en place devenue impossible s'arrête proprement au lieu de boucler indéfiniment, sans produire de révélation publique.
+
 
 ## 13. Exigences de sortie des tests
 

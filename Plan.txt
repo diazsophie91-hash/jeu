@@ -35,7 +35,7 @@ La structure technique de départ :
 Je partirais sur une architecture Python modulaire, adaptée au développement dans VS Code, avec des tests automatisés utilisant pytest. Aucun assistant de code spécifique n'est nécessaire.
 
 racine du dépôt/ (jeu en local et sur github)
-├── C'est cadeau.docx
+├── C'est cadeau !.docx
 ├── Plan.txt
 ├── specifications/
 │   ├── game_flow.md
