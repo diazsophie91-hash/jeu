@@ -103,9 +103,13 @@ def condition_matches(condition: Condition, counts: Mapping[str, int]) -> bool:
         return counts.get(a, 0) == counts.get(b, 0) and counts.get(a, 0) >= condition.minimum
     if kind is ConditionKind.DIVERSITY:
         required = condition.colors or tuple(counts)
-        if condition.minimum is None: raise ValueError("DIVERSITY exige un minimum explicite.")
-        return len(required) >= condition.minimum and all(counts.get(c, 0) >= 1 for c in required) and (
-            condition.max_per_color is None or all(counts.get(c, 0) <= condition.max_per_color for c in required))
+        if condition.minimum is None or not required or condition.minimum > len(required):
+            raise ValueError("DIVERSITY exige des couleurs candidates et un minimum compris entre un et leur nombre.")
+        if condition.max_per_color is not None and any(
+            counts.get(c, 0) > condition.max_per_color for c in required
+        ):
+            return False
+        return sum(counts.get(c, 0) > 0 for c in required) >= condition.minimum
     if kind is ConditionKind.SAME_COLOR_COUNT:
         if condition.threshold is None:
             raise ValueError("SAME_COLOR_COUNT exige un seuil.")

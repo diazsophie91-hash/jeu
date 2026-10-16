@@ -14,13 +14,13 @@ Le moteur gère les sacs, les jetons, les cartes secrètes, les cadeaux, les ref
 
 
 3. Créer les tests automatisés avec pytest
-Tester les cas normaux et les situations limites : grand sac vide, victoire immédiate, éliminations en chaîne, égalités terminales, rejeu et remise à zéro entre les manches.
+Tester les cas normaux et les situations limites : grand sac vide, victoire immédiate, éliminations en chaîne, égalités terminales, rejeu et remise à zéro entre les manches,...
 
 
 
 
 4. Ajouter les agents et les simulations
-Commencer par des agents simples et reproductibles, puis lancer des milliers de parties pour mesurer la durée, les éliminations précoces, la fréquence des victoires et l’équilibre des cartes.
+Commencer par des agents simples et reproductibles, puis lancer des milliers de parties pour mesurer la durée, les éliminations précoces, la fréquence des victoires et l’équilibre des cartes et du jeu.
 
 
 

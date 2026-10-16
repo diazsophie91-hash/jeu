@@ -568,15 +568,11 @@ Comparer les résultats des variantes :
 
 Les résultats doivent être enregistrés séparément, avec leur configuration, afin d'éviter de mélanger des règles différentes.
 
-### T64 — Égalité terminale après une chaîne d'éliminations
+### T64 — Arrêt de la succession B au dernier survivant
 
-Créer un scénario dans lequel une action initiale provoque plusieurs éliminations, puis une chaîne d'éliminations forcées qui se termine par une égalité terminale.
+Créer une chaîne en variante B où une ou plusieurs éliminations forcées laissent exactement un joueur en jeu, sans que le seuil de manche ait été atteint.
 
-Vérifier que :
-- Les points valablement attribués avant la dernière élimination sont conservés.
-- La dernière élimination ne rapporte aucun point.
-- Aucun bonus de manche n'est attribué.
-- La partie se termine sans vainqueur.
+Vérifier que la succession s'arrête immédiatement : le dernier survivant gagne selon le mode. En mode Points et manches, il remporte la manche et reçoit le bonus ; les points valablement crédités pour les éliminations non terminales sont conservés. Aucun autre joueur ne peut être éliminé après cette victoire. L'égalité terminale résultant d'une même résolution qui élimine directement tous les joueurs encore en jeu est couverte par T34 et T65.
 
 ### T65 — Action initiale éliminant directement tous les joueurs
 

@@ -87,31 +87,42 @@ class GameConfig:
                     raise ConfigurationError(f"La carte {card.id!r} a une condition de deux paires invalide.")
                 if condition.kind is ConditionKind.EQUAL_COUNTS and len(condition.colors) != 2:
                     raise ConfigurationError(f"La carte {card.id!r} doit désigner deux couleurs.")
-            if card.victory and _conditions_overlap(card.defeat, card.victory, tuple(self.colors), sum(self.colors.values())):
+            if card.victory and _conditions_overlap(card.defeat, card.victory, self.colors):
                 raise ConfigurationError(f"La carte {card.id!r} peut gagner et perdre simultanément.")
         if not _complete_setup_possible(self.cards, self.colors, self.mode, self.initial_hand_size):
             raise ConfigurationError("Aucune attribution complète de collections de départ valides n'est possible avec ces cartes et ce stock.")
 
 
-def _conditions_overlap(a, b, colors, total):
+def _conditions_overlap(a, b, stock):
+    """Return whether both conditions match one physically possible collection."""
+    from .cards import condition_matches
+
+    colors = tuple(stock)
     counts = [0] * len(colors)
-    def visit(i, left):
-        if i == len(colors) - 1:
-            counts[i] = left
-            mapping = dict(zip(colors, counts))
-            from .cards import condition_matches
-            return condition_matches(a, mapping) and condition_matches(b, mapping)
-        for n in range(left + 1):
-            counts[i] = n
-            if visit(i + 1, left - n):
+
+    def visit(index, remaining):
+        if index == len(colors):
+            collection = dict(zip(colors, counts))
+            return condition_matches(a, collection) and condition_matches(b, collection)
+
+        # Bound each color by its actual stock and the total stock left.
+        for quantity in range(min(stock[colors[index]], remaining) + 1):
+            counts[index] = quantity
+            if visit(index + 1, remaining - quantity):
                 return True
+        counts[index] = 0
         return False
-    return any(visit(0, n) for n in range(total + 1))
+
+    return visit(0, sum(stock.values()))
 
 
 def _validate_condition(card_id, condition):
     from .cards import ConditionKind, MajorityBasis
     kind = condition.kind
+    if len(set(condition.colors)) != len(condition.colors):
+        raise ConfigurationError(
+            f"La condition {kind.value!r} de la carte {card_id!r} répète une couleur ; chaque couleur ne peut apparaître qu'une fois."
+        )
     if kind is ConditionKind.MAJORITY and condition.majority_basis is not None and not isinstance(condition.majority_basis, MajorityBasis):
         raise ConfigurationError(f"La définition de majorité de la carte {card_id!r} est inconnue.")
     valid = {
