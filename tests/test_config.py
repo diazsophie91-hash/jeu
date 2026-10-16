@@ -67,6 +67,28 @@ def test_t22_unknown_condition_kind_and_bad_parameter_types_fail_at_construction
         Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold="three")
 
 
+def test_t15_t55_multiple_defeat_collection_and_card_fields_are_validated():
+    with pytest.raises(ValueError, match="au moins une condition"):
+        Card("empty", ())
+    with pytest.raises(ValueError, match="Chaque condition de défaite"):
+        Card("wrong", (Condition(ConditionKind.TOTAL_COUNT, threshold=3), "bad"))
+    with pytest.raises(ValueError, match="victoire doit être une Condition"):
+        Card("bad-victory", Condition(ConditionKind.TOTAL_COUNT, threshold=3), "bad")
+    with pytest.raises(ValueError, match="composition.*couples"):
+        Condition(ConditionKind.COMPOSITION, composition="rouge")
+
+
+def test_t15_t55_victory_contradiction_is_checked_against_every_defeat_condition():
+    defeat_1 = Condition(ConditionKind.TOTAL_COUNT, threshold=99)
+    defeat_2 = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=2)
+    victory = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=2)
+    cards = (Card("a", (defeat_1, defeat_2), victory),
+             Card("b", (defeat_1, defeat_2), victory))
+    config = GameConfig({"rouge": 4, "bleu": 4}, GameMode.SECRET_OBJECTIVE, cards)
+    with pytest.raises(ConfigurationError, match="gagner et perdre simultanément"):
+        config.validate(2)
+
+
 def test_t55_insufficient_stock_and_impossible_initial_collection_are_rejected():
     with pytest.raises(ConfigurationError, match="moins de trois jetons par joueur"):
         GameConfig({"rouge": 5}, GameMode.LAST_SURVIVOR,

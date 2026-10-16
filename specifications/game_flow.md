@@ -47,6 +47,8 @@ Le premier joueur est choisi selon la méthode convenue par le groupe :
 
 Si plusieurs personnes sont à égalité sur le critère du cadeau réel reçu le plus récemment, le groupe tranche par accord. La méthode utilisée peut être définie avant le début de la partie.
 
+L'orchestrateur peut enregistrer le choix collectif ou les données de récence, détecter une égalité et recueillir une décision de consensus explicite. Le moteur reçoit ensuite un premier joueur résolu et conserve la méthode dans son historique de préparation ; il ne départage jamais lui-même une égalité.
+
 ## 4. Déroulement normal d'un tour
 
 Le tour commence avec un joueur actif.
@@ -71,13 +73,15 @@ Un joueur éliminé ne peut plus commencer d'action normale ni être choisi comm
 
 ## 5. Annonces et mensonges
 
-Le donneur peut annoncer quelque chose au sujet du cadeau, mais il n'est jamais obligé de parler.
+Dans l'implémentation actuelle, les échanges sont des messages écrits rattachés à la proposition de cadeau en cours. Le donneur peut envoyer une annonce spontanée ; le destinataire peut poser une question et le donneur peut répondre. Chacun peut aussi rester silencieux selon sa stratégie.
 
-Il peut faire une annonce spontanément ou répondre à une question du destinataire.
+Les messages sont visibles uniquement par les deux participants et ne sont pas ajoutés à l'historique public des événements. L'orchestrateur peut en conserver une trace séparée pour l'audit des simulations.
 
-Une annonce peut être vraie ou mensongère, y compris lorsqu'elle concerne la couleur ou la nature du jeton.
+Une annonce ou une réponse peut être vraie ou mensongère, y compris lorsqu'elle concerne la couleur ou la nature du jeton. Le moteur ne vérifie pas les affirmations et n'en déduit aucune action.
 
-Avant la résolution du cadeau, le destinataire ne connaît pas la véritable identité du jeton.
+Les messages ne sont pas des commandes : ils ne déplacent pas de jeton, ne modifient pas les sacs, n'acceptent ni ne refusent un cadeau et ne déclenchent aucune condition. Avant la révélation prévue par les règles, le destinataire ne reçoit jamais l'identité réelle du jeton par la vue du moteur ou par les métadonnées de communication. Une affirmation du donneur reste seulement une affirmation.
+
+Les stratégies d'agent de communication et de décision du cadeau sont configurées séparément. Les agents reçoivent leur vue privée filtrée, leurs actions légales et les messages adressés aux participants ; ils ne reçoivent pas l'état interne ni l'historique privé d'un autre joueur.
 
 ## 6. Si le destinataire accepte le cadeau
 
@@ -138,6 +142,8 @@ Après chaque élimination forcée de cette chaîne, appliquer les contrôles da
 2. Si des joueurs restent et que le mode est Points et manches, attribuer le point et faire progresser le compteur du joueur auquel cette élimination d'adversaire est attribuée, même si ce joueur a été éliminé plus tôt dans la même chaîne. Puis vérifier si son compteur atteint le seuil de manche ; si oui, la manche se termine et son bonus est attribué.
 3. Si le seuil de manche n'est pas atteint et qu'un seul joueur reste, ce dernier gagne la partie en mode A/B, ou la manche et son bonus en mode C.
 4. Sinon, poursuivre la succession.
+
+La chaîne traite un successeur à la fois et s'arrête dès que le seuil met fin à la manche ou qu'un seul joueur reste : ce dernier gagne immédiatement. Elle ne peut donc pas atteindre une élimination forcée supplémentaire laissant zéro survivant. Le contrôle de l'égalité terminale ci-dessus reste un garde-fou normatif pour une résolution qui éliminerait plusieurs joueurs ensemble ; l'égalité terminale d'une action initiale est testée séparément.
 
 Si l'action initiale élimine directement tous les joueurs encore en jeu, elle se termine par une égalité sans vainqueur et n'accorde aucun point ni bonus au titre de cette action. L'auto-élimination du joueur responsable ne rapporte jamais de point supplémentaire.
 

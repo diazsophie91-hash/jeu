@@ -23,3 +23,7 @@ Cette conclusion porte sur la spécification écrite. Elle ne vaut ni exécution
 ## Décision
 
 **Le point 1 de `Plan.txt` peut être considéré comme terminé au niveau des spécifications.** Le projet peut passer au point 2 : coder le moteur Python comme source unique de vérité, en gardant les paramètres expérimentaux configurables. Les tests automatisés prévus au point 3 devront ensuite vérifier concrètement le comportement du moteur.
+
+## Précision ajoutée pour T73
+
+La chaîne B résout une élimination forcée à la fois et s'arrête lorsqu'il ne reste qu'un joueur : celui-ci gagne avant qu'un successeur supplémentaire soit éliminé. La branche T73 décrivant une dernière élimination forcée laissant zéro survivant est donc inaccessible dans la chaîne ; l'égalité reste testée pour une résolution initiale qui élimine directement tous les joueurs, sous T34/T65. Cette précision conserve l'ordre normatif de `game_flow.md` et évite un test fabriqué par mutation d'état.

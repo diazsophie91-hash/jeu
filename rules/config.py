@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Mapping
 
 from .cards import Card, ConditionKind
+from .card_pool import CardPool
 
 
 class ConfigurationError(ValueError):
@@ -32,7 +33,7 @@ class PointsFormat(str, Enum):
 class GameConfig:
     colors: Mapping[str, int]
     mode: GameMode
-    cards: tuple[Card, ...]
+    cards: tuple[Card, ...] = ()
     succession: Succession = Succession.REPLAY_RESPONSIBLE
     points_format: PointsFormat = PointsFormat.FIXED_ROUNDS
     donor_defeat_after_removal: bool = False
@@ -45,6 +46,7 @@ class GameConfig:
     initial_hand_size: int = 3
     max_setup_attempts: int = 100
     experimental_options: Mapping[str, object] = field(default_factory=dict)
+    card_pool: CardPool | None = None
 
     def validate(self, player_count: int) -> None:
         if not isinstance(self.mode, GameMode):
@@ -61,9 +63,19 @@ class GameConfig:
             raise ConfigurationError("Le stock contient moins de trois jetons par joueur.")
         if self.initial_hand_size < 1 or self.max_setup_attempts < 1:
             raise ConfigurationError("Les paramètres de mise en place doivent être positifs.")
-        if len(self.cards) != player_count:
-            raise ConfigurationError(f"Fournissez exactement une carte par joueur ({player_count} attendues, {len(self.cards)} fournies). La composition d'un paquet complet n'est pas gérée par le moteur.")
-        if len({card.id for card in self.cards}) != len(self.cards):
+        if self.card_pool is not None:
+            if self.cards:
+                raise ConfigurationError("Choisissez les cartes injectées ou une réserve, pas les deux.")
+            cards = self.card_pool.cards
+            try:
+                self.card_pool.validate_for(player_count)
+            except ValueError as exc:
+                raise ConfigurationError(str(exc)) from exc
+        else:
+            cards = self.cards
+            if len(cards) != player_count:
+                raise ConfigurationError(f"Fournissez exactement une carte par joueur ({player_count} attendues, {len(cards)} fournies), ou configurez une réserve suffisante.")
+        if len({card.id for card in cards}) != len(cards):
             raise ConfigurationError("Les identifiants des cartes doivent être uniques.")
         if self.mode is GameMode.POINTS:
             if self.elimination_threshold is None or self.elimination_threshold < 1:
@@ -72,12 +84,12 @@ class GameConfig:
                 raise ConfigurationError("Le seuil de points doit être configuré pour le format C2.")
             if self.fixed_rounds < 1 or self.bonus_points < 0:
                 raise ConfigurationError("Paramètres de score invalides.")
-        for card in self.cards:
+        for card in cards:
             if not card.id:
                 raise ConfigurationError("Une carte n'a pas d'identifiant.")
             if (card.victory is not None) != (self.mode is GameMode.SECRET_OBJECTIVE):
                 raise ConfigurationError(f"La carte {card.id!r} est incompatible avec le mode {self.mode.value}.")
-            for condition in (card.defeat, card.victory):
+            for condition in (*card.defeat_conditions, card.victory):
                 if condition is None:
                     continue
                 _validate_condition(card.id, condition)
@@ -87,9 +99,10 @@ class GameConfig:
                     raise ConfigurationError(f"La carte {card.id!r} a une condition de deux paires invalide.")
                 if condition.kind is ConditionKind.EQUAL_COUNTS and len(condition.colors) != 2:
                     raise ConfigurationError(f"La carte {card.id!r} doit désigner deux couleurs.")
-            if card.victory and _conditions_overlap(card.defeat, card.victory, self.colors):
+            if card.victory and any(_conditions_overlap(defeat, card.victory, self.colors)
+                                    for defeat in card.defeat_conditions):
                 raise ConfigurationError(f"La carte {card.id!r} peut gagner et perdre simultanément.")
-        if not _complete_setup_possible(self.cards, self.colors, self.mode, self.initial_hand_size):
+        if self.card_pool is None and not _complete_setup_possible(cards, self.colors, self.mode, self.initial_hand_size):
             raise ConfigurationError("Aucune attribution complète de collections de départ valides n'est possible avec ces cartes et ce stock.")
 
 
@@ -150,7 +163,8 @@ def _complete_setup_possible(cards, stock, mode, hand_size):
             if i == len(names) - 1:
                 vec = values + (left,)
                 counts = dict(zip(names, vec))
-                if sum(vec) == hand_size and not condition_matches(card.defeat, counts) and not (
+                if sum(vec) == hand_size and not any(condition_matches(defeat, counts)
+                                                     for defeat in card.defeat_conditions) and not (
                     mode is GameMode.SECRET_OBJECTIVE and condition_matches(card.victory, counts)):
                     valid.append(vec)
                 return

@@ -1,0 +1,47 @@
+"""Validated, configurable card reserves; selection is reproducible via the caller's RNG."""
+from __future__ import annotations
+
+from collections import Counter
+from dataclasses import dataclass
+from types import MappingProxyType
+from typing import Mapping
+
+from .cards import Card, ConditionKind
+
+
+@dataclass(frozen=True, slots=True)
+class CardPool:
+    cards: tuple[Card, ...]
+    expected_defeat_counts: Mapping[ConditionKind, int]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "cards", tuple(self.cards))
+        object.__setattr__(self, "expected_defeat_counts", MappingProxyType(dict(self.expected_defeat_counts)))
+        if not self.cards:
+            raise ValueError("La réserve de cartes ne peut pas être vide.")
+        if any(not isinstance(card, Card) for card in self.cards):
+            raise ValueError("La réserve ne contient que des cartes valides.")
+        if len({card.id for card in self.cards}) != len(self.cards):
+            raise ValueError("Les identifiants des cartes de la réserve doivent être uniques.")
+        if not self.expected_defeat_counts:
+            raise ValueError("Déclarez les familles de défaite attendues dans la réserve.")
+        if any(not isinstance(kind, ConditionKind) or count != 2
+               for kind, count in self.expected_defeat_counts.items()):
+            raise ValueError("La réserve doit déclarer exactement deux exemplaires attendus par type de défaite.")
+        actual = Counter(condition.kind for card in self.cards for condition in card.defeat_conditions)
+        if actual != Counter(self.expected_defeat_counts):
+            raise ValueError(
+                f"Composition de réserve invalide : {dict(actual)!r}, "
+                f"attendu {dict(self.expected_defeat_counts)!r}."
+            )
+
+    def validate_for(self, player_count: int) -> None:
+        if len(self.cards) < player_count:
+            raise ValueError(f"Réserve insuffisante : {player_count} cartes sont nécessaires, {len(self.cards)} disponibles.")
+
+    def draw(self, count: int, rng) -> tuple[Card, ...]:
+        self.validate_for(count)
+        selected = tuple(rng.sample(self.cards, count))
+        if len({card.id for card in selected}) != count:
+            raise RuntimeError("La sélection de cartes a produit un doublon.")
+        return selected

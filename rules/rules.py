@@ -14,7 +14,14 @@ def token_counts(tokens: Iterable[Token]) -> Counter[str]:
 
 def evaluate_defeat(card: Card | None, tokens: Iterable[Token]) -> bool:
     if card is None: raise ValueError("Carte secrète manquante.")
-    return condition_matches(card.defeat, token_counts(tokens))
+    return any(evaluate_defeat_conditions(card, tokens))
+
+
+def evaluate_defeat_conditions(card: Card | None, tokens: Iterable[Token]) -> tuple[bool, ...]:
+    """Evaluate every defeat condition (without short-circuiting) for one collection."""
+    if card is None: raise ValueError("Carte secrète manquante.")
+    counts = token_counts(tokens)
+    return tuple(condition_matches(condition, counts) for condition in card.defeat_conditions)
 
 
 def evaluate_victory(card: Card | None, tokens: Iterable[Token]) -> bool:

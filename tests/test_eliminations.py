@@ -37,6 +37,40 @@ def test_t15_single_resolution_eliminates_a_player_only_once():
     assert state.player("a").credited_eliminations == 1
 
 
+def test_t15_multiple_satisfied_defeat_conditions_eliminate_once_through_engine_api():
+    from engine import create_game
+    from rules.rules import evaluate_defeat_conditions
+
+    first = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=1)
+    second = Condition(ConditionKind.TOTAL_COUNT, threshold=2)
+    cards = (Card("a", Condition(ConditionKind.TOTAL_COUNT, threshold=99)),
+             Card("b", (first, second)),
+             Card("c", Condition(ConditionKind.TOTAL_COUNT, threshold=99)))
+    config = GameConfig({"rouge": 2, "bleu": 2, "vert": 2}, GameMode.POINTS, cards,
+                        elimination_threshold=9, initial_hand_size=1)
+    game = create_game(["a", "b", "c"], config, first_player_id="a",
+                       rng=ScriptedRNG([["rouge"], ["bleu"], ["vert"]]))
+    state = game._state
+    before_ids = {t.id for t in state.common_bag} | {t.id for p in state.players for t in p.hand}
+    assert evaluate_defeat_conditions(state.player("b").card,
+                                      [*state.player("b").hand, Token("probe", "rouge")]) == (True, True)
+    game.submit(ChooseRecipient("b"))
+    game.submit(ProposeGift("t0000"))
+    game.submit(AcceptGift())
+    assert not state.player("b").alive
+    assert len([e for e in state.events if e.kind == "player_eliminated" and e.data["player_id"] == "b"]) == 1
+    assert len([e for e in state.events if e.kind == "card_revealed" and e.data["player_id"] == "b"]) == 1
+    assert len([e for e in state.events if e.kind == "point_awarded" and e.data["player_id"] == "a"]) == 1
+    assert state.player("a").score == state.player("a").credited_eliminations == 1
+    eliminated = next(e for e in state.events if e.kind == "player_eliminated" and e.data["player_id"] == "b")
+    assert len(eliminated.data["returned_token_ids"]) == 2
+    after_ids = {t.id for t in state.common_bag} | {t.id for p in state.players for t in p.hand}
+    assert after_ids == before_ids
+    assert state.active_player_id == "a"
+    assert sum(e.kind == "successor_selected" for e in state.events) == 1
+    state.assert_invariants()
+
+
 def test_t19_variant_a_responsible_replay_draw_checks_secret_victory_first():
     loss = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=1)
     victory = Condition(ConditionKind.COLOR_COUNT, colors=("bleu",), threshold=1)

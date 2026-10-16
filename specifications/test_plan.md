@@ -139,11 +139,11 @@ Vérifier que :
 
 ### T10 — Annonce facultative du donneur
 
-Tester un cadeau sans annonce, un cadeau avec une annonce spontanée et un cadeau accompagné d'une réponse à une question.
+Tester un cadeau sans message, une annonce spontanée, une question du destinataire et une réponse du donneur. Les messages écrits sont rattachés à l'identifiant de la proposition et ne sont visibles que des participants ; ils ne sont pas des événements publics du moteur.
 
-Vérifier qu'une annonce n'est jamais obligatoire et qu'elle ne modifie pas les règles de transfert ou de vérification des conditions.
+Vérifier que les stratégies de communication et de décision sont configurées séparément et qu'elles peuvent choisir silence, annonce, question, réponse ou absence de réponse. Une annonce peut être vraie ou mensongère, y compris en réponse à une question ; le moteur ne contrôle pas la véracité du texte.
 
-Une annonce mensongère ne doit pas modifier l'identité réelle du jeton enregistrée par le moteur.
+Vérifier que l'identité réelle du jeton reste cachée à tout agent non autorisé jusqu'à sa révélation prévue par les règles. Aucun message ne modifie l'état, ne devient une commande, ne contourne l'interdiction de refuser lorsque le sac commun est vide, et ne change pas la succession.
 
 ### T11 — Choix d'un destinataire valide
 
@@ -183,10 +183,14 @@ Vérifier que le moteur compte les jetons de toutes les couleurs et applique le 
 Créer une collection qui satisfait deux conditions de défaite ou davantage.
 
 Vérifier que :
+- Chaque condition de la carte est évaluée lors du déclencheur applicable.
 - Le joueur est éliminé une seule fois.
-- La révélation de la carte secrète n'est pas répétée inutilement.
-- Le score ne reçoit pas plusieurs points pour la même élimination.
+- La carte est révélée une seule fois et tous ses jetons personnels sont rendus une seule fois.
+- Le score et le compteur d'éliminations ne reçoivent pas plusieurs crédits pour la même élimination.
 - La succession est déterminée une seule fois pour la résolution.
+- Les invariants et la conservation des jetons sont respectés.
+
+Répéter pendant la préparation : une collection qui satisfait l'une quelconque de plusieurs conditions invalide le tirage et est redonnée sans élimination, révélation ni attribution de points.
 
 ### T16 — Vérification de la condition du donneur après retrait
 
@@ -497,7 +501,7 @@ Tester les configurations :
 - Avec une carte attribuée pour laquelle aucune collection valide de trois jetons n'est possible à partir du stock.
 - Avec un stock et des cartes ne permettant aucune attribution complète de collections initiales valides à tous les joueurs.
 
-La conception de référence prévoit deux exemplaires de chaque type de condition de défaite ; tester cette propriété si le paquet réel est géré par le moteur, sans supposer que les seuils ou les cartes candidates sont définitifs. Si les cartes sont injectées de l'extérieur pour un scénario de test, la disponibilité physique du paquet est hors périmètre, mais leur structure et leur compatibilité restent testées.
+La réserve configurable déclare les familles de conditions de défaite qu'elle contient ; tester exactement deux conditions de chaque famille déclarée, sans supposer un catalogue canonique ni fixer les seuils. Vérifier aussi la suffisance, les identifiants uniques, la compatibilité de mode, les conditions valides et non contradictoires, la distribution reproductible sans doublon et une nouvelle distribution à chaque manche lorsqu'une réserve est configurée. L'injection explicite de cartes de scénario reste prise en charge et contourne uniquement la sélection depuis la réserve.
 
 Le moteur doit signaler clairement une configuration invalide plutôt que d'inventer un comportement. Vérifier aussi qu'une tentative de mise en place qui devient impossible pour un joueur restant s'arrête avec une erreur explicite au lieu de boucler indéfiniment, sans révéler les cartes et sans déclarer victoire ou élimination.
 
@@ -566,7 +570,9 @@ Comparer les résultats des variantes :
 - Tirage de rejeu visible ou secret.
 - Variantes de conditions de défaite.
 
-Les résultats doivent être enregistrés séparément, avec leur configuration, afin d'éviter de mélanger des règles différentes.
+Les résultats doivent être enregistrés séparément, avec leur configuration, la stratégie de chaque agent, le numéro de simulation et la graine afin d'éviter de mélanger des règles différentes. Les agents automatisés agissent uniquement par les vues privées, les actions légales et l'API des contrôleurs. Ils peuvent utiliser des stratégies de communication distinctes de leurs stratégies de décision.
+
+Les tests pytest ordinaires utilisent quelques graines fixes et restent rapides. Une campagne paramétrable peut exécuter davantage de graines séparément et rapporter les parties terminées, les vainqueurs/égalités, les tours moyens, les messages par type et les erreurs. Une comparaison de communication ne rapporte que les messages réellement envoyés ; un mode de véracité déclaratif décrit la stratégie configurée et ne constitue pas une validation automatique du texte.
 
 ### T64 — Arrêt de la succession B au dernier survivant
 
@@ -642,11 +648,12 @@ Vérifier qu'après la résolution du cadeau et en l'absence de fin immédiate, 
 
 ### T73 — Priorités après chaque élimination forcée en variante B
 
-Créer une chaîne où les successeurs sans jeton sont éliminés successivement. Tester au moins ces scénarios :
-- L'élimination forcée finale ne laisse aucun joueur : égalité terminale prioritaire, aucun point ni bonus pour la dernière élimination, conservation des points précédemment acquis.
+Créer une chaîne où les successeurs sans jeton sont éliminés successivement. Tester les branches atteignables :
 - Une élimination forcée non terminale fait atteindre le seuil de manche : la manche s'arrête avant une nouvelle étape de succession.
 - Le seuil n'est pas atteint et un seul joueur reste : le dernier survivant gagne selon le mode, avec bonus de manche en mode Points et manches.
 - La chaîne continue lorsqu'aucune de ces conditions de fin n'est satisfaite.
+
+La succession traite une élimination forcée à la fois et s'arrête dès qu'un seul joueur reste. Une élimination forcée ultérieure laissant zéro survivant est donc inaccessible ; ne pas la simuler en construisant un état privé artificiel. L'égalité terminale initiale, ses points antérieurs conservés et l'absence de crédit pour l'action terminale sont vérifiés séparément par T34/T65 et leurs tests de score.
 
 ### T74 — Égalité au score maximal à la fin normale de C2
 
@@ -687,9 +694,9 @@ Vérifier que ces valeurs proviennent de la configuration du scénario, ne sont 
 
 ### T79 — Départage du premier joueur
 
-Tester les deux méthodes prévues : accord du groupe et personne ayant reçu un cadeau réel le plus récemment.
+Tester les deux méthodes prévues : choix collectif fourni explicitement et personne ayant reçu un cadeau réel le plus récemment à partir des données de récence fournies.
 
-Lorsque plusieurs personnes sont à égalité sur le critère du cadeau reçu le plus récemment, vérifier que la procédure demande une décision par accord du groupe au lieu de départager automatiquement selon une règle inventée. Si le moteur ne gère pas les décisions humaines de mise en place, vérifier seulement que ce cas est explicitement exposé comme une décision à fournir en entrée.
+Lorsque plusieurs personnes sont à égalité sur le critère de récence, vérifier que la sélection exige une décision explicite ou un mécanisme de consensus configuré et ne choisit pas silencieusement un joueur. Vérifier la participation de l'identifiant choisi, la trace de la méthode et sa transmission à la mise en place du moteur. L'API actuelle acceptant directement `first_player_id` reste compatible.
 
 ### T80 — Victoire après le tirage d’un successeur sans jeton en variante A
 

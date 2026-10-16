@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Mapping
+from typing import Iterable, Mapping
 
 
 class ConditionKind(str, Enum):
@@ -42,6 +42,22 @@ class Condition:
     def __post_init__(self) -> None:
         if not isinstance(self.kind, ConditionKind):
             raise ValueError(f"Type de condition invalide : {self.kind!r}")
+        if not isinstance(self.colors, (tuple, list)) or any(not isinstance(color, str) or not color for color in self.colors):
+            raise ValueError("Les couleurs d'une condition doivent être des identifiants non vides.")
+        object.__setattr__(self, "colors", tuple(self.colors))
+        if not isinstance(self.composition, (tuple, list)):
+            raise ValueError("La composition d'une condition doit être une suite de couples couleur/quantité.")
+        normalized_composition = tuple(self.composition)
+        if any(not isinstance(pair, (tuple, list)) or len(pair) != 2
+               or not isinstance(pair[0], str) or not pair[0]
+               or not isinstance(pair[1], int) or isinstance(pair[1], bool)
+               for pair in normalized_composition):
+            raise ValueError("Chaque entrée de composition doit contenir une couleur et une quantité entière.")
+        object.__setattr__(self, "composition", tuple((color, amount) for color, amount in normalized_composition))
+        if not isinstance(self.exact, bool):
+            raise ValueError("Le paramètre exact doit être booléen.")
+        if self.majority_basis is not None and not isinstance(self.majority_basis, MajorityBasis):
+            raise ValueError("La définition de majorité est invalide.")
         if self.threshold is not None and (not isinstance(self.threshold, int) or isinstance(self.threshold, bool)):
             raise ValueError("Le seuil d'une condition doit être un entier.")
         if self.threshold is not None and self.threshold < 1:
@@ -63,8 +79,34 @@ class Condition:
 @dataclass(frozen=True, slots=True)
 class Card:
     id: str
-    defeat: Condition
+    defeat: Condition | tuple[Condition, ...]
     victory: Condition | None = None
+
+    def __post_init__(self) -> None:
+        if self.victory is not None and not isinstance(self.victory, Condition):
+            raise ValueError("La condition de victoire doit être une Condition ou None.")
+        conditions = normalize_defeat_conditions(self.defeat)
+        # Keep the historical single-condition attribute shape for existing callers.
+        object.__setattr__(self, "defeat", conditions[0] if len(conditions) == 1 else conditions)
+
+    @property
+    def defeat_conditions(self) -> tuple[Condition, ...]:
+        """Uniform immutable form used by validation, setup, and rule evaluation."""
+        return normalize_defeat_conditions(self.defeat)
+
+
+def normalize_defeat_conditions(value: Condition | Iterable[Condition]) -> tuple[Condition, ...]:
+    if isinstance(value, Condition):
+        conditions = (value,)
+    elif isinstance(value, (tuple, list)):
+        conditions = tuple(value)
+    else:
+        raise ValueError("Une carte doit porter une ou plusieurs conditions de défaite.")
+    if not conditions:
+        raise ValueError("Une carte doit porter au moins une condition de défaite.")
+    if any(not isinstance(condition, Condition) for condition in conditions):
+        raise ValueError("Chaque condition de défaite doit être une Condition.")
+    return conditions
 
 
 def condition_matches(condition: Condition, counts: Mapping[str, int]) -> bool:

@@ -81,6 +81,21 @@ def test_t04_secret_objective_defeat_collection_is_retried_without_eliminating_p
     game._state.assert_invariants()
 
 
+def test_t15_setup_retries_when_any_of_multiple_defeat_conditions_matches():
+    multi = Card("multi", (
+        Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=2),
+        Condition(ConditionKind.COLOR_COUNT, colors=("bleu",), threshold=2),
+    ))
+    config = GameConfig({"rouge": 2, "bleu": 4}, GameMode.LAST_SURVIVOR,
+                        (multi, safe_card("safe")), initial_hand_size=2)
+    rng = ScriptedRNG([["rouge", "rouge"], ["rouge", "bleu"], ["bleu", "bleu"]])
+    game = create_game(["a", "b"], config, first_player_id="a", rng=rng)
+    assert sorted(token.color for token in game._state.player("a").hand) == ["bleu", "rouge"]
+    assert game._state.player("a").alive and not game._state.player("a").revealed
+    assert not any(event.kind in {"player_eliminated", "card_revealed"} for event in game.public_event_history())
+    game.assert_invariants()
+
+
 def test_t05_retries_preserve_unique_token_ids_and_total_count():
     cards = (Card("risk", Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=3)), safe_card("safe"))
     config = GameConfig({"rouge": 3, "bleu": 5}, GameMode.LAST_SURVIVOR, cards)

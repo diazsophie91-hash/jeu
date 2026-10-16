@@ -50,6 +50,8 @@ Une partie en cours ne doit jamais avoir plusieurs joueurs actifs simultanément
 
 Le joueur actif peut être temporairement absent pendant la résolution d'une action, une élimination en chaîne ou une transition entre deux manches.
 
+Les messages d'annonce, questions et réponses ne font pas partie de l'état des règles ni de l'historique public des événements. Une couche de communication séparée peut conserver des messages écrits ordonnés et liés à l'identifiant de proposition, accessibles uniquement à ses participants et à l'orchestrateur. Ils n'emportent aucune information réelle sur le jeton en dehors de ce qu'un joueur choisit d'affirmer.
+
 ## 4. État de chaque joueur
 
 Chaque joueur doit posséder les informations suivantes.
@@ -98,15 +100,15 @@ Chaque carte secrète doit contenir les informations nécessaires à la vérific
 
 Le contenu de la carte doit respecter le mode sélectionné :
 
-- Mode A — Dernier survivant : une condition de défaite, sans condition individuelle de victoire.
-- Mode B — Objectif secret : une condition de défaite et une condition de victoire compatibles entre elles.
-- Mode C — Points et manches : une condition de défaite, sans condition individuelle de victoire.
+- Mode A — Dernier survivant : une ou plusieurs conditions de défaite, sans condition individuelle de victoire.
+- Mode B — Objectif secret : une ou plusieurs conditions de défaite et une condition de victoire compatible avec chacune d'elles.
+- Mode C — Points et manches : une ou plusieurs conditions de défaite, sans condition individuelle de victoire.
 
 La carte contient également les paramètres nécessaires à l'évaluation de sa condition ou de ses conditions. Les objectifs spéciaux d'élimination précoce ne doivent pas être distribués comme règles actives avant que leur fonctionnement soit entièrement défini.
 
 Les conditions doivent être représentées de façon structurée afin que le moteur puisse les évaluer automatiquement.
 
-Si le moteur distribue lui-même les cartes, il doit suivre le paquet ou la réserve, vérifier sa capacité par rapport au nombre de joueurs et empêcher une distribution impossible. Si les cartes sont fournies explicitement par un scénario de test externe, la gestion physique du paquet peut être hors périmètre, mais la validité et la compatibilité des cartes fournies restent à contrôler.
+Si le moteur distribue lui-même les cartes, il doit suivre le paquet ou la réserve, vérifier sa capacité par rapport au nombre de joueurs et empêcher une distribution impossible. La composition déclarée indique les familles de conditions de défaite présentes et exige exactement deux exemplaires de chaque famille ; les seuils restent configurables. Une distribution pour une manche sélectionne sans doublon une carte par joueur avec le générateur aléatoire fourni. Si les cartes sont injectées explicitement par un scénario, cette gestion de réserve est contournée, mais la validité et la compatibilité des cartes restent contrôlées.
 
 Les seuils, couleurs concernées, quantités et autres paramètres des conditions ne doivent pas être dispersés dans le code. Ils doivent pouvoir être définis dans la configuration des cartes. La validation doit aussi refuser une carte dont le contenu ne correspond pas au mode sélectionné, une carte contradictoire, ou une carte faisant référence à un type ou paramètre inconnu.
 
@@ -246,6 +248,7 @@ Le moteur doit pouvoir enregistrer les événements importants dans leur ordre c
 Exemples d'événements :
 
 - Début de partie ou de manche.
+- Sélection du premier joueur, avec l'identifiant choisi, la méthode et la résolution explicite d'une éventuelle égalité.
 - Tirage d'un jeton pendant la préparation.
 - Début d'un tour.
 - Choix d'un destinataire.

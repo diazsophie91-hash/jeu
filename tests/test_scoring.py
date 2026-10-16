@@ -114,6 +114,24 @@ def test_t64_t73_variant_b_stops_at_threshold_before_another_successor():
     state.assert_invariants()
 
 
+def test_t73_terminal_tie_is_distinct_from_last_survivor_and_preserves_prior_points():
+    loss_a = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=1)
+    loss_b = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=2)
+    game, state = build_game(mode=GameMode.POINTS, order=["a", "b"],
+                             hands={"a": ["rouge", "rouge"], "b": ["rouge"]}, bag=[],
+                             defeats={"a": loss_a, "b": loss_b}, donor_defeat_after_removal=True,
+                             scores={"a": 4, "b": 3}, credited={"a": 1, "b": 2},
+                             elimination_threshold=9)
+    begin(game, "a-t0")
+    game.submit(AcceptGift())
+    assert state.result == "terminal_tie" and state.winners == ()
+    assert (state.player("a").score, state.player("b").score) == (4, 3)
+    assert (state.player("a").credited_eliminations, state.player("b").credited_eliminations) == (1, 2)
+    assert not any(event.kind in {"point_awarded", "round_bonus"} for event in state.events)
+    assert state.phase is Phase.GAME_OVER and state.active_player_id is None
+    state.assert_invariants()
+
+
 def test_t39_t73_clockwise_chain_continues_and_credits_each_nonterminal_elimination():
     loss = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=1)
     game, state = build_game(mode=GameMode.POINTS, order=["a", "b", "c", "d", "e"],

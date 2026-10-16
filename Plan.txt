@@ -45,15 +45,17 @@ racine du dépôt/ (jeu en local et sur github)
 ├── rules/
 │   ├── config.py
 │   ├── cards.py
+│   ├── card_pool.py
 │   └── rules.py
 ├── engine/
 │   ├── state.py
 │   ├── actions.py
+│   ├── selection.py
 │   ├── transitions.py
 │   └── setup.py
 ├── agents/
-│   ├── random_agent.py
-│   └── heuristic_agent.py
+│   ├── communication.py
+│   └── strategies.py
 ├── simulation/
 │   ├── runner.py
 │   └── statistics.py

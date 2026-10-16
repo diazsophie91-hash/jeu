@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Any
 
 from rules.cards import Card, Token
+from rules.card_pool import CardPool
 from rules.config import GameConfig
 
 
@@ -71,6 +72,7 @@ class GameState:
     round_threshold_reached: bool = False
     events: list[Event] = field(default_factory=list)
     resolution_eliminated: set[str] = field(default_factory=set)
+    card_pool: CardPool | None = None
 
     def emit(self, kind: str, *, public_data: dict[str, Any] | None = None, **data: Any) -> None:
         self.events.append(Event(len(self.events) + 1, kind, self.round_number, data,

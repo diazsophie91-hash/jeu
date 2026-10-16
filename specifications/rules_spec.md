@@ -16,6 +16,8 @@ Les règles établies doivent être appliquées sans interprétation personnelle
 
 Une condition de défaite est une règle associée à la carte secrète d'un joueur. Elle indique à partir de quelle collection de jetons le joueur est éliminé.
 
+Une carte porte une ou plusieurs conditions de défaite structurées. Le moteur évalue chacune d'elles lors d'un déclencheur applicable ; la carte déclenche l'élimination si au moins une condition est satisfaite. Une résolution ne peut toutefois éliminer le joueur qu'une seule fois.
+
 Le moteur doit pouvoir :
 1. Connaître la collection actuelle du joueur.
 2. Évaluer chaque condition de défaite applicable à sa carte.
@@ -38,7 +40,7 @@ En cours de partie, une condition de victoire ne peut être vérifiée comme dé
 
 Le contenu d'une carte doit également correspondre au mode sélectionné : Dernier survivant et Points et manches exigent une condition de défaite sans condition individuelle de victoire ; Objectif secret exige une condition de défaite et une condition de victoire.
 
-La conception doit empêcher qu'une même collection satisfasse simultanément les deux conditions d'une carte d'Objectif secret. Les cartes générées ou configurées doivent être contrôlées avant utilisation : carte incomplète, incompatible avec le mode, contradictoire, ou utilisant un type ou paramètre inconnu doit être signalée comme invalide. Si le moteur gère le paquet, il doit aussi vérifier qu'il contient suffisamment de cartes pour les joueurs concernés et que sa composition respecte la configuration déclarée. La conception prévoit deux exemplaires de chaque type de condition de défaite ; cette contrainte porte sur la configuration de paquet retenue et ne fixe pas les seuils expérimentaux des conditions.
+La conception doit empêcher qu'une même collection satisfasse simultanément la condition de victoire et l'une quelconque des conditions de défaite d'une carte d'Objectif secret. Les cartes générées ou configurées doivent être contrôlées avant utilisation : carte incomplète, incompatible avec le mode, contradictoire, ou utilisant un type ou paramètre inconnu doit être signalée comme invalide. Si le moteur gère le paquet, il doit aussi vérifier qu'il contient suffisamment de cartes pour les joueurs concernés et que sa composition respecte la configuration déclarée. La réserve déclare les familles de conditions de défaite qu'elle contient et doit en fournir exactement deux conditions de chaque famille ; cette règle ne fixe ni catalogue de cartes canonique ni seuils expérimentaux.
 
 ## 3. Conditions de défaite prévues
 

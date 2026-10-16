@@ -51,6 +51,10 @@ class GameEngine:
     @property
     def finished(self): return self._state.phase is Phase.GAME_OVER
 
+    def assert_invariants(self) -> None:
+        """Public read-only invariant check for orchestrators and simulations."""
+        self._state.assert_invariants()
+
     def public_view(self) -> PublicView:
         s = self._state
         proposal = None if s.proposal is None else (s.proposal.donor_id, s.proposal.recipient_id)
@@ -176,6 +180,8 @@ class GameEngine:
         s.proposal = None
         if won:
             return
+        # The proposal has been fully resolved; the selected successor begins a new turn.
+        s.phase = Phase.CHOOSE_RECIPIENT
         alive = [p for p in s.players if p.alive]
         # An action that itself eliminates everyone is a terminal tie and awards nothing.
         if not alive:
@@ -406,18 +412,26 @@ class GameEngine:
                 if s.rounds_completed >= target and not s.c1_tiebreak_round:
                     # A tie after regular rounds requires the tiebreak that is already marked.
                     if len(self._leaders()) == 1: raise PhaseError("Le format C1 est terminé.")
-        cards = list(s.config.cards); self._rng.shuffle(cards)
+        if s.card_pool is not None:
+            cards = list(s.card_pool.draw(len(s.players), self._rng))
+        else:
+            cards = list(s.config.cards)
+            self._rng.shuffle(cards)
+        from dataclasses import replace
+        active_config = replace(s.config, cards=tuple(cards))
+        active_config.validate(len(s.players))
         tokens = [Token(f"r{s.round_number+1}-t{i:04d}", c) for i,c in enumerate(
             color for color,n in s.config.colors.items() for _ in range(n))]
         self._rng.shuffle(tokens)
         from .setup import _deal_valid_hands
         from .state import PlayerState
         candidates = [PlayerState(p.id, card=card) for p,card in zip(s.players,cards)]
-        allocation, common_bag = _deal_valid_hands(candidates, tokens, s.config, self._rng)
+        allocation, common_bag = _deal_valid_hands(candidates, tokens, active_config, self._rng)
         for p, card in zip(s.players, cards):
             p.alive=True; p.revealed=False; p.hand.clear(); p.card=card; p.credited_eliminations=0
         for p, hand in zip(s.players, allocation): p.hand.extend(hand)
         s.common_bag=common_bag
+        s.config=active_config
         s.round_number += 1; s.proposal=None; s.resolution_eliminated.clear(); s.round_winner=None
         s.result=None; s.phase=Phase.CHOOSE_RECIPIENT
         s.active_player_id=starter
