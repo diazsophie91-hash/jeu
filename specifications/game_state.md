@@ -60,7 +60,7 @@ Chaque joueur doit posséder les informations suivantes.
 | Sac personnel | Liste des jetons actuellement détenus par le joueur |
 | Carte secrète | Conditions secrètes attribuées à ce joueur pour la manche |
 | Score total | Total des points conservés dans le mode Points et manches |
-| Éliminations de la manche | Nombre d'éliminations subies pendant la manche actuelle |
+| Éliminations créditées pendant la manche | Nombre d'éliminations attribuées au joueur selon les règles de score, utilisé notamment pour déterminer s'il atteint le seuil de victoire de manche |
 | État d'élimination | Informations nécessaires pour ne pas éliminer deux fois le même joueur pendant une résolution |
 
 L'ordre des joueurs autour de la table doit être conservé même après des éliminations. Il sert à déterminer le prochain joueur actif dans les variantes de succession.
@@ -160,7 +160,7 @@ Le moteur doit terminer la résolution de l'action avant de passer à une nouvel
 Le programme doit distinguer :
 
 - Le fait qu'un joueur soit éliminé de la partie.
-- Le nombre d'éliminations qu'il a subies pendant la manche, lorsqu'un tel compteur est utilisé.
+- Le nombre d'éliminations créditées au joueur pendant la manche, lorsque ce compteur est utilisé pour déterminer le vainqueur de la manche.
 - Le joueur responsable d'une élimination, lorsque cette information intervient dans l'attribution des points ou la succession.
 - L'ensemble des éliminations issues d'une même résolution.
 
@@ -177,7 +177,7 @@ Les détails de succession sont définis dans `game_flow.md` et devront être tr
 En mode Points et manches, l'état doit notamment conserver :
 
 - Le score total de chaque joueur.
-- Le nombre d'éliminations subies pendant la manche en cours.
+- Le nombre d'éliminations créditées au joueur pendant la manche, distinct du score total.
 - Le joueur responsable de chaque élimination, lorsqu'il peut être déterminé.
 - Les points déjà attribués pendant la manche.
 - Le joueur ayant remporté la manche, le cas échéant.
@@ -193,6 +193,8 @@ Les scores totaux sont conservés entre les manches.
 La vérification du seuil de points en C2 ne doit pas arrêter une manche en cours. Le classement final est calculé à la fin de cette manche, conformément aux règles du jeu.
 
 Une égalité terminale sans vainqueur doit être distinguée d'une égalité de scores à la fin d'une partie C1.
+
+Le compteur d'éliminations créditées sert à vérifier le seuil de victoire de manche. Il ne doit pas être confondu avec le nombre d'éliminations subies par le joueur ni être déduit automatiquement de son score total. Les règles d'attribution doivent déterminer explicitement quand ce compteur augmente.
 
 ## 11. Fin de manche et nouvelle manche
 

@@ -191,6 +191,33 @@ Vérifier que le moteur applique exactement la configuration sélectionnée.
 
 Dans les deux cas, le retrait du jeton par le donneur ne peut pas déclencher sa condition de victoire personnelle.
 
+### T66 — Élimination du donneur avant la décision du destinataire
+
+Activer la variante de vérification de la condition de défaite du donneur après retrait.
+
+Préparer une situation dans laquelle le retrait du jeton déclenche sa condition de défaite.
+
+Vérifier que :
+- La condition est vérifiée avant la décision du destinataire.
+- Le donneur est éliminé et révèle sa carte secrète complète.
+- La proposition de cadeau reste en cours.
+- Le destinataire peut encore accepter ou refuser.
+- L'élimination du donneur n'est pas annulée par un refus.
+
+### T67 — Résolution du cadeau après l'élimination du donneur
+
+Reprendre le scénario T66 et tester séparément l'acceptation et le refus.
+
+Vérifier que le cadeau est résolu selon les règles normales, que les jetons ne sont ni perdus ni dupliqués et que le joueur actif suivant est déterminé uniquement après la résolution complète.
+
+Vérifier également les règles de points applicables si le destinataire est éliminé pendant cette même résolution.
+
+### T68 — Variante désactivée
+
+Répéter le scénario avec la vérification de la condition du donneur après retrait désactivée.
+
+Vérifier que cette vérification n'a pas lieu et que le cadeau suit son déroulement normal.
+
 ## 6. Tests des objectifs secrets
 
 ### T17 — Déclencheur de victoire autorisé
@@ -383,6 +410,26 @@ Répéter avec une résolution qui élimine tous les joueurs restants. Dans ce c
 Faire gagner un joueur en tant que dernier survivant avant qu'il n'atteigne le seuil d'éliminations.
 
 Vérifier que le bonus de manche prévu est attribué.
+
+### T64 — Égalité terminale après une chaîne d'éliminations
+
+Créer un scénario dans lequel une action initiale provoque plusieurs éliminations, puis une chaîne d'éliminations forcées qui se termine par une égalité terminale.
+
+Vérifier que :
+- Les points valablement attribués avant la dernière élimination sont conservés.
+- La dernière élimination ne rapporte aucun point.
+- Aucun bonus de manche n'est attribué.
+- La partie se termine sans vainqueur.
+
+### T65 — Action initiale éliminant directement tous les joueurs
+
+Créer un scénario dans lequel l'action initiale élimine directement tous les joueurs encore en jeu.
+
+Vérifier que :
+- La partie se termine sur une égalité sans vainqueur.
+- Aucun point n'est attribué au titre de cette action.
+- Aucun bonus de manche n'est attribué.
+- Aucun point n'est annulé ou ajouté rétroactivement.
 
 ## 9. Tests du mode Points et manches : C1 et C2
 

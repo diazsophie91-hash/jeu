@@ -79,7 +79,15 @@ Avant la résolution du cadeau, le destinataire ne connaît pas la véritable id
 
 Si le destinataire satisfait sa condition de victoire en recevant le cadeau, la partie s'arrête immédiatement. Il révèle alors sa carte secrète complète à tous les joueurs avant que sa victoire soit déclarée.
 
-Le donneur peut également devoir vérifier sa propre condition de défaite après avoir retiré le jeton de son sac. Ce comportement est une variante de test configurable.
+### Vérification de la condition du donneur après retrait
+
+Lorsque la variante est activée, la condition de défaite du donneur est vérifiée immédiatement après qu'il a retiré le jeton de son sac et l'a placé dans sa main, avant que le destinataire décide d'accepter ou de refuser.
+
+Si cette condition est satisfaite, le donneur est éliminé et révèle sa carte secrète complète. La proposition de cadeau reste néanmoins en cours et le destinataire doit encore décider de l'accepter ou de la refuser.
+
+L'élimination du donneur n'est pas annulée par un éventuel refus. Le cadeau et ses conséquences sont résolus normalement, puis le joueur actif suivant est déterminé selon les règles de succession.
+
+La victoire personnelle du donneur n'est jamais vérifiée à la suite du simple retrait d'un jeton.
 
 Le retrait d'un jeton par le donneur ne peut jamais déclencher à lui seul sa condition de victoire en mode Objectif secret.
 
@@ -122,9 +130,9 @@ Lorsqu'une élimination se produit, le joueur responsable de l'action doit rejou
 Cas particuliers :
 - Si le donneur est éliminé à la suite du retrait de son propre jeton et que le destinataire survit, le destinataire devient actif.
 - Si le joueur qui doit rejouer possède encore au moins un jeton dans son sac, il peut effectuer son prochain tour selon les règles normales.
-- Si ce joueur ne possède plus de jeton, il doit en tirer un du sac commun s'il en reste.
+- Si ce joueur ne possède aucun jeton dans son sac, il doit en tirer un du sac commun s'il en reste.
 - Le jeton tiré pour permettre le rejeu est secret par défaut. Sa révélation à tous peut être activée comme variante de test.
-- Le joueur vérifie les conditions applicables après ce tirage.
+- Après ce tirage, le joueur vérifie sa condition de défaite et, en mode Objectif secret, sa condition de victoire.
 - Si le sac commun est vide et qu'aucun jeton ne peut être tiré, le joueur est éliminé, révèle sa carte secrète complète et la succession continue.
 - Si le tirage provoque une élimination, la succession continue selon les règles de la variante A.
 
@@ -156,6 +164,10 @@ Si plusieurs joueurs sont éliminés par une même action, toutes les éliminati
 
 Si tous les joueurs encore en jeu sont éliminés par la même résolution, la partie se termine sur une égalité sans vainqueur. Cette issue prévaut sur les conditions normales de victoire de manche et sur les bonus associés à cette résolution.
 
+En mode Points et manches, lorsqu'une égalité terminale résulte d'une chaîne d'éliminations, les points valablement acquis avant la dernière élimination restent conservés. La dernière élimination ne rapporte aucun point et aucun bonus de manche n'est attribué.
+
+Si l'action initiale élimine directement tous les joueurs encore en jeu, aucun point ni bonus n'est attribué pour cette action.
+
 ## 10. Les trois modes de jeu
 
 ### Mode A — Dernier survivant
@@ -172,7 +184,8 @@ Chaque joueur possède une condition secrète de défaite et une condition secr�
 
 La condition de victoire est vérifiée uniquement après :
 - la réception d'un cadeau accepté ;
-- ou le tirage d'un jeton du sac commun après un refus.
+- le tirage d'un jeton du sac commun après un refus ;
+- le tirage d'un jeton du sac commun nécessaire pour permettre un rejeu en variante A.
 
 Elle n'est pas vérifiée lorsque le joueur retire simplement un jeton de son sac en tant que donneur.
 

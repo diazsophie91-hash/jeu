@@ -101,11 +101,21 @@ Lorsque le sac commun contient encore des jetons, le destinataire tire un jeton 
 
 ### 4.3. Après le retrait d'un jeton par le donneur
 
-Une variante de test détermine si la condition de défaite du donneur est vérifiée après le retrait du jeton qu'il propose.
+### 4.3. Après le retrait d'un jeton par le donneur
 
-Ce paramètre doit pouvoir activer ou désactiver cette vérification. Le comportement ne doit pas être imposé définitivement dans le code.
+Une variante de test détermine si la condition de défaite du donneur est vérifiée immédiatement après le retrait du jeton de son sac, avant la décision du destinataire.
 
-Si la condition du donneur est vérifiée, elle est évaluée à partir de sa collection après le retrait du jeton.
+Si cette option est activée :
+1. Le donneur retire le jeton et le place dans sa main.
+2. Sa condition de défaite est vérifiée à partir de sa collection après retrait.
+3. S'il est éliminé, il révèle sa carte secrète complète.
+4. La proposition de cadeau reste en cours.
+5. Le destinataire décide ensuite d'accepter ou de refuser.
+6. Le cadeau est résolu normalement, puis les conséquences restantes et la succession sont déterminées.
+
+Si cette option est désactivée, la condition de défaite du donneur n'est pas vérifiée à ce moment-là.
+
+Un refus ultérieur ne peut jamais annuler rétroactivement une élimination déjà prononcée. Le retrait du jeton ne déclenche jamais la condition de victoire personnelle du donneur.
 
 ### 4.4. Après un tirage nécessaire à un rejeu en variante A
 
@@ -223,11 +233,23 @@ Une victoire secrète provoque également la révélation complète de la carte 
 
 ### 8.3. Égalité terminale
 
+### 8.3. Égalité terminale
+
 Si tous les joueurs encore en jeu sont éliminés par la même résolution, la partie se termine sur une égalité sans vainqueur.
 
-Cette issue prévaut sur les règles normales d'attribution des points et de bonus de manche liées à cette résolution.
+Il faut distinguer deux situations en mode Points et manches.
 
-En mode Points et manches, les points valablement acquis avant cette résolution restent conservés, mais l'action qui provoque l'égalité terminale n'accorde aucun point ni bonus.
+**Situation 1 — L'action initiale élimine directement tous les joueurs encore en jeu.**
+
+Aucun point ni bonus de manche n'est attribué au titre de cette action.
+
+**Situation 2 — L'action initiale déclenche une chaîne d'éliminations qui aboutit ensuite à une égalité terminale.**
+
+Les points valablement acquis avant la dernière élimination restent conservés. La dernière élimination, celle qui élimine tous les joueurs encore en jeu, ne rapporte aucun point. Aucun bonus de manche n'est attribué pour cette résolution terminale.
+
+Les points déjà attribués ne doivent pas être annulés rétroactivement simplement parce que la chaîne se termine par une égalité.
+
+Cette distinction doit être respectée par le moteur et couverte par des tests automatisés.
 
 ## 9. Succession après une élimination
 
@@ -282,13 +304,21 @@ Si le destinataire est éliminé après le tirage consécutif à un refus, le do
 
 Si le donneur est éliminé à cause de sa propre condition après avoir retiré le jeton de son sac, il ne reçoit aucun point pour sa propre élimination.
 
-Si le destinataire est également éliminé par la même action, le point dû pour l'élimination du destinataire est attribué au donneur même si celui-ci est également éliminé, sauf si la résolution élimine tous les joueurs restants et déclenche une égalité terminale.
+Si le destinataire est également éliminé par la même action, le point dû pour son élimination est attribué au donneur, même si celui-ci est également éliminé, sauf si l'action initiale élimine directement tous les joueurs encore en jeu.
+
+Si l'action initiale ne provoque pas à elle seule l'élimination de tous les joueurs, le point valablement attribué pour l'élimination du destinataire est conservé, même si une chaîne ultérieure aboutit à une égalité terminale.
 
 ### 10.4. Chaîne d'éliminations en variante B
 
-Lorsqu'une action déclenche une chaîne d'éliminations forcées, chacune de ces éliminations rapporte un point au joueur responsable de l'action initiale.
+### 10.4. Chaîne d'éliminations en variante B
 
-Cette attribution s'applique uniquement tant que la résolution ne se termine pas sur une égalité terminale sans vainqueur.
+Lorsqu'une action déclenche une chaîne d'éliminations forcées, chaque élimination forcée rapporte normalement un point au joueur responsable de l'action initiale.
+
+Toutefois, l'élimination qui met fin à la partie en éliminant tous les joueurs encore en jeu ne rapporte aucun point.
+
+Les points acquis avant cette dernière élimination restent conservés.
+
+Si l'action initiale élimine directement tous les joueurs encore en jeu, aucun point ni bonus n'est attribué au titre de cette action initiale.
 
 ### 10.5. Élimination liée au rejeu en variante A
 
