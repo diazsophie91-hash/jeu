@@ -128,7 +128,7 @@ Le moteur peut accéder à toutes les informations nécessaires au fonctionnemen
 - La véritable identité d'un jeton proposé comme cadeau.
 - Les informations nécessaires à la reproductibilité des tirages aléatoires.
 
-Ces informations ne doivent pas être révélées automatiquement aux joueurs. Pendant la mise en place, le moteur peut évaluer en privé les conditions de chaque carte, mais ne révèle aucune carte parce qu'une collection initiale est invalide. Une carte n'est révélée qu'en cours de jeu lorsqu'une condition produit effectivement l'élimination du joueur ou qu'un objectif secret produit une victoire conformément aux règles.
+Ces informations ne doivent pas être révélées automatiquement aux joueurs. Pendant la mise en place, chaque joueur peut consulter sa propre carte en privé et le moteur peut évaluer ses conditions en interne. Si une collection initiale est invalide, aucun autre joueur n'en est informé et aucune carte ni condition n'est révélée publiquement ; le statut du joueur ne change pas et aucun résultat de jeu n'est déclenché. La carte complète n'est révélée aux joueurs qu'en cours de jeu lorsqu'une condition entraîne effectivement l'élimination ou qu'un objectif secret entraîne une victoire conformément aux règles.
 
 ### 7.2. Données visibles selon les règles
 

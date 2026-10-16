@@ -75,7 +75,7 @@ Préparer un scénario dans lequel la première collection tirée satisfait une 
 Vérifier que :
 - Les trois jetons sont remis dans le sac commun.
 - Une nouvelle collection de trois jetons est tirée.
-- La vérification de la collection est interne : aucune condition ni carte secrète n'est révélée publiquement.
+- Le joueur peut consulter sa propre carte en privé et le moteur évalue les conditions en interne. Aucun autre joueur n'est informé de cette évaluation ; aucune carte ni condition n'est révélée publiquement.
 - La collection invalide ne provoque pas d'élimination et ne modifie pas le statut du joueur.
 - Aucun point n'est attribué.
 - La préparation ne déclare aucune victoire.
@@ -84,7 +84,7 @@ Vérifier que :
 
 Faire en sorte qu'une collection initiale déclenche normalement une condition de défaite ou de victoire.
 
-Vérifier que cette condition sert uniquement à recommencer le tirage initial, ne révèle pas la carte ou ses conditions, et ne modifie ni le statut du joueur ni le résultat de la partie. Répéter pour une condition de défaite en modes A et C, puis pour une condition de défaite et une condition de victoire en mode B.
+Vérifier que le joueur peut consulter sa propre carte en privé et que le moteur évalue la condition uniquement pour recommencer le tirage initial. Aucun autre joueur ne doit être informé de l'évaluation ; aucune carte ni condition ne doit être révélée publiquement ; le statut du joueur et le résultat de la partie restent inchangés. Répéter pour une condition de défaite en modes A et C, puis pour une condition de défaite et une condition de victoire en mode B.
 
 ### T05 — Conservation du nombre total de jetons
 
@@ -703,14 +703,15 @@ Vérifier que le successeur tire un jeton, que le moteur contrôle d’abord sa 
 
 ### T81 — Refus après élimination préalable du donneur
 
-Reprendre le scénario T66 avec un sac commun contenant au moins un jeton au moment où le destinataire décide, puis faire refuser le cadeau.
+Reprendre le scénario T66 avec un donneur déjà éliminé avant la décision et un sac commun contenant au moins un jeton au moment où le destinataire refuse. Prévoir dans le sac commun au moins un jeton identifiable distinct du jeton proposé. Contrôler le générateur aléatoire pour exécuter séparément les deux résultats possibles :
+- **Sous-cas A — le cadeau est repioché :** après l'ajout du jeton proposé au sac commun, forcer le tirage de ce même jeton ;
+- **Sous-cas B — un autre jeton est pioché :** après l'ajout du jeton proposé au sac commun, forcer le tirage du jeton distinct déjà présent.
 
-Vérifier que :
-- Le jeton proposé reste temporaire jusqu'à la décision, puis est ajouté au sac commun sans être révélé.
-- Le jeton proposé est ajouté au sac commun avant le tirage du destinataire.
-- Le destinataire tire un jeton au hasard dans le sac commun ainsi augmenté ; le jeton proposé peut donc être celui qui est tiré.
-- Le jeton tiré quitte le sac commun et rejoint le sac personnel du destinataire ; aucun jeton n'est perdu ni dupliqué.
-- La visibilité du jeton tiré suit la variante activée. Si le jeton proposé est celui qui est tiré, sa visibilité dépend donc du résultat du tirage et de cette variante.
+Vérifier dans les deux sous-cas que :
+- Le jeton proposé reste temporaire jusqu'à la décision, puis est ajouté au sac commun sans être révélé avant le tirage.
+- Le jeton proposé est ajouté au sac commun avant le tirage du destinataire ; le tirage est effectué dans ce sac augmenté.
+- Le jeton sélectionné quitte le sac commun et rejoint le sac personnel du destinataire ; tous les autres jetons restent à leur emplacement attendu, sans perte ni duplication.
+- Le moteur conserve l'identité interne du jeton et ne révèle sa couleur aux joueurs que si le résultat est tiré et que la variante de visibilité prévoit cette révélation. En mode secret, seul le destinataire peut connaître le jeton tiré.
 - En mode Objectif secret, la condition de victoire du destinataire est vérifiée en premier après la pioche ; si elle n'est pas satisfaite, sa condition de défaite est contrôlée.
 - En mode Points et manches, si la pioche élimine le destinataire, appliquer l'attribution du point au donneur initial selon la règle de score, même si celui-ci est déjà éliminé, sauf si l'action initiale élimine directement tous les joueurs encore en jeu.
 - La succession n'est déterminée qu'après la résolution complète, sous réserve d'une fin immédiate.

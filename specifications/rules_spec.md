@@ -117,9 +117,9 @@ Si le sac commun est vide, aucune pioche n'a lieu : le joueur est éliminé, ré
 
 ### 4.5. Pendant la préparation
 
-La collection initiale de trois jetons est évaluée en privé afin d'écarter une collection qui satisfait une condition de défaite ou, en mode Objectif secret, une condition de victoire.
+La collection initiale de trois jetons est évaluée en privé afin d'écarter une collection qui satisfait une condition de défaite ou, en mode Objectif secret, une condition de victoire. Le joueur peut consulter sa propre carte en privé et le moteur peut évaluer les conditions en interne ; aucun autre joueur n'est informé de l'évaluation.
 
-Cette vérification ne provoque jamais une élimination ou une victoire et ne révèle aucune carte secrète. Si la collection n'est pas valide, les trois jetons sont remis dans le sac commun et une nouvelle collection de trois jetons est tirée. La condition satisfaite sert uniquement à invalider la collection de départ ; elle ne constitue pas un résultat de jeu. En cours de partie, la carte complète n'est révélée que lorsqu'une condition déclenche effectivement une élimination ou une victoire secrète selon les règles.
+Cette vérification ne provoque jamais une élimination ou une victoire et aucune carte ni condition n'est révélée publiquement. Si la collection n'est pas valide, les trois jetons sont remis dans le sac commun et une nouvelle collection de trois jetons est tirée. La condition satisfaite sert uniquement à invalider la collection de départ ; elle ne constitue pas un résultat de jeu. En cours de partie, la carte complète n'est révélée aux joueurs que lorsqu'une condition déclenche effectivement une élimination ou une victoire secrète selon les règles.
 
 ### 4.6. Validation des configurations de départ
 

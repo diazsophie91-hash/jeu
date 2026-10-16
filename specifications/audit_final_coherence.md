@@ -1,0 +1,25 @@
+# Audit final de cohérence — « C'est cadeau ! »
+
+## Verdict
+
+**Aucun écart bloquant connu ne reste dans les quatre spécifications pour commencer le point 2 de `Plan.txt`.** Les règles de base, les transitions, les emplacements de jetons, les contrôles de victoire/défaite, les scores et les successions sont harmonisés entre `game_flow.md`, `game_state.md`, `rules_spec.md`, `test_plan.md` et le document de référence `C'est cadeau.docx` livré dans ce paquet.
+
+Cette conclusion porte sur la spécification écrite. Elle ne vaut ni exécution des tests automatisés, ni preuve de fonctionnement d'un moteur Python qui reste à coder. Les seuils, cartes candidates et variantes explicitement expérimentaux demeurent configurables.
+
+## Contrôles croisés effectués
+
+1. **Document officiel et archive.** Le `C'est cadeau.docx` de la racine et celui du ZIP ont été synchronisés. Le ZIP a été reconstruit à partir des fichiers finaux et contrôlé après création.
+2. **Jeton proposé et emplacements.** Le jeton sort du sac personnel au moment de la proposition et reste dans la main/emplacement temporaire. En cas d'acceptation, il passe de cet emplacement au sac du destinataire. En cas de refus avec donneur encore en jeu, il retourne dans le sac de ce donneur avant la pioche. En cas de refus après élimination du donneur, il rejoint d'abord le sac commun sans révélation ; le destinataire pioche ensuite dans le sac augmenté et peut tirer ce même jeton. Le cas où le sac commun est vide à la décision force l'acceptation.
+3. **Séquence du donneur après retrait.** Si la variante est activée, la condition de défaite est contrôlée immédiatement après le retrait et avant la décision du destinataire. La proposition continue si le donneur est éliminé, et son contrôle de défaite n'est pas répété plus tard dans la même résolution. Le retrait seul ne déclenche jamais sa victoire secrète.
+4. **Procédures d'acceptation et de refus.** Le DOCX a été corrigé pour éviter les doublons d'attribution/validation du score entre les étapes 6 et 7 de la procédure d'acceptation et entre les étapes 5 et 6 de la procédure de refus. Le texte décrit le transfert depuis l'emplacement temporaire plutôt que de présenter le jeton comme toujours présent dans le sac du donneur.
+5. **Confidentialité pendant la mise en place.** Le propriétaire peut consulter sa propre carte en privé ; le moteur peut évaluer les conditions en interne. Une condition satisfaite ne fait qu'invalider la collection de départ et déclencher un nouveau tirage de trois jetons. Aucune carte ni condition n'est révélée publiquement ; aucune victoire, élimination ou attribution de score n'est déclenchée.
+6. **Validation de la mise en place.** Le moteur doit vérifier que le stock compte au moins trois jetons par joueur, que les données/cartes sont valides et qu'une attribution complète de collections initiales valides est possible. Une préparation devenue impossible doit s'arrêter avec une erreur explicite plutôt que boucler indéfiniment.
+7. **Victoires secrètes.** Les quatre déclencheurs sont listés de manière cohérente : réception d'un cadeau accepté ; pioche après refus ; pioche nécessaire au rejeu du responsable en variante A ; pioche nécessaire pour activer en variante A un successeur désigné dont le sac est vide. La victoire est contrôlée avant la défaite après une pioche autorisée, révèle la carte complète et arrête immédiatement la résolution.
+8. **Modes et scores.** Les conditions de carte des modes A, B et C, les éliminations uniques, les points crédités même si le responsable est lui-même éliminé (hors exceptions terminales), les égalités sans vainqueur, les seuils C1/C2 et la conservation des points antérieurs à une chaîne B terminale sont repris de façon compatible dans les descriptions principales.
+9. **Tests.** Les identifiants T01 à T82 sont présents une seule fois, sans numéro manquant ni doublon. T81 force séparément les deux résultats possibles du tirage après retour du cadeau au sac commun : tirer le cadeau lui-même ou tirer un autre jeton préexistant. T82 couvre la confidentialité de la mise en place et les configurations impossibles.
+10. **Références internes.** Les spécifications s'appellent mutuellement par les noms de fichiers présents dans le paquet. Les variantes et paramètres expérimentaux restent identifiés comme tels ; aucune hypothèse d'équilibrage n'est présentée comme définitive.
+11. **Rendu du DOCX.** La version finale a été rendue en 20 pages et contrôlée visuellement après les dernières retouches de texte et de pagination. La section 4.3 commence sur une nouvelle page afin d’éviter que son étape 6 soit isolée sur une page presque vide. Aucun texte coupé, chevauchement, glyphe manquant ou tableau cassé n’a été constaté dans le rendu final.
+
+## Décision
+
+**Le point 1 de `Plan.txt` peut être considéré comme terminé au niveau des spécifications.** Le projet peut passer au point 2 : coder le moteur Python comme source unique de vérité, en gardant les paramètres expérimentaux configurables. Les tests automatisés prévus au point 3 devront ensuite vérifier concrètement le comportement du moteur.
