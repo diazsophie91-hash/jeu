@@ -1,0 +1,56 @@
+Le plan de développement que je te recommande
+
+1. Transformer les règles en spécifications exécutables
+Première étape
+Définir précisément les états du jeu, les actions autorisées, les conditions de victoire et de défaite, les transitions de tour et les exceptions. Les règles validées deviennent la référence ; les variantes restent configurables.
+
+
+
+
+2. Coder le moteur en Python
+Le moteur gère les sacs, les jetons, les cartes secrètes, les cadeaux, les refus, les éliminations, les successions et les scores. Il constitue la source de vérité : aucun agent ne peut contourner les règles.
+
+
+
+
+3. Créer les tests automatisés avec pytest
+Tester les cas normaux et les situations limites : grand sac vide, victoire immédiate, éliminations en chaîne, égalités terminales, rejeu et remise à zéro entre les manches.
+
+
+
+
+4. Ajouter les agents et les simulations
+Commencer par des agents simples et reproductibles, puis lancer des milliers de parties pour mesurer la durée, les éliminations précoces, la fréquence des victoires et l’équilibre des cartes.
+
+
+
+
+5. Ajouter les agents avancés plus tard
+Une fois le moteur fiable : agents stratégiques, éventuels agents utilisant un LLM, puis apprentissage et outils spécialisés si cela devient utile.
+
+
+
+La structure technique de départ
+Je partirais sur une architecture Python modulaire, adaptée à VS Code et à Cline :
+jeu/
+├── rules/
+│   ├── config.py          # Paramètres et variantes
+│   ├── cards.py           # Cartes secrètes et conditions
+│   └── rules.py           # Règles exécutables
+├── engine/
+│   ├── state.py           # État complet d'une partie
+│   ├── actions.py         # Actions autorisées
+│   ├── transitions.py     # Résolution des actions
+│   └── setup.py           # Préparation et manches
+├── agents/
+│   ├── random_agent.py
+│   └── heuristic_agent.py
+├── simulation/
+│   ├── runner.py
+│   └── statistics.py
+└── tests/
+    ├── test_setup.py
+    ├── test_gifts.py
+    ├── test_eliminations.py
+    ├── test_scoring.py
+    └── test_modes.py
