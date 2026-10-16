@@ -8,7 +8,7 @@ from typing import Mapping, Sequence
 from agents import Agent, CommunicationChannel, CommunicationIntent, CommunicationKind, ScriptedDecision, SilentCommunication
 from engine import start_new_round
 from engine.selection import FirstPlayerSelection
-from engine.state import Phase
+from engine.state import Phase, VisibleEvent
 from rules import GameConfig as RulesConfig
 
 
@@ -40,6 +40,7 @@ class GameRun:
     turns: int
     rounds: int
     messages: tuple
+    first_player_event: VisibleEvent
 
     @property
     def message_counts(self) -> dict[str, int]:
@@ -107,7 +108,9 @@ def run_game(
         raise ValueError(f"Des stratégies concernent des joueurs absents : {sorted(unknown)!r}.")
     from engine import create_game
     game = create_game(ids, config, seed=seed, first_player_id=first_player_id,
-                       first_player_method=selection.method.value if selection else None)
+                       first_player_method=selection.method.value if selection else None,
+                       first_player_resolution=selection.resolution if selection else None,
+                       first_player_tied_candidates=selection.tied_candidates if selection else ())
     agents = {}
     for player_id in ids:
         policy = policies.get(player_id, AgentPolicy(ScriptedDecision()))
@@ -169,11 +172,14 @@ def run_game(
     run_configuration = _configuration_record(config)
     run_configuration["first_player_id"] = first_player_id
     run_configuration["first_player_method"] = selection.method.value if selection else "direct_input"
+    run_configuration["first_player_resolution"] = selection.resolution if selection else "direct"
     run_configuration["round_starter_policy"] = "rotate_by_round_number"
+    first_player_event = next(event for event in game.public_event_history()
+                              if event.kind == "first_player_selected")
     return GameRun(configuration_name, simulation_index, seed, run_configuration,
                    strategies, communication_modes, public.result or "unknown", public.winners, actions,
                    sum(event.kind == "gift_proposed" for event in game.public_event_history()),
-                   public.round_number, channel._message_history())
+                   public.round_number, channel._message_history(), first_player_event)
 
 
 def run_campaign(

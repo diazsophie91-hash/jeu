@@ -413,7 +413,8 @@ class GameEngine:
                     # A tie after regular rounds requires the tiebreak that is already marked.
                     if len(self._leaders()) == 1: raise PhaseError("Le format C1 est terminé.")
         if s.card_pool is not None:
-            cards = list(s.card_pool.draw(len(s.players), self._rng))
+            cards = list(s.card_pool.draw_usable(len(s.players), self._rng, s.config.colors,
+                                                  s.config.mode, s.config.initial_hand_size))
         else:
             cards = list(s.config.cards)
             self._rng.shuffle(cards)
@@ -426,7 +427,8 @@ class GameEngine:
         from .setup import _deal_valid_hands
         from .state import PlayerState
         candidates = [PlayerState(p.id, card=card) for p,card in zip(s.players,cards)]
-        allocation, common_bag = _deal_valid_hands(candidates, tokens, active_config, self._rng)
+        allocation, common_bag = _deal_valid_hands(candidates, tokens, active_config, self._rng,
+                                                    ensure_feasible=s.card_pool is not None)
         for p, card in zip(s.players, cards):
             p.alive=True; p.revealed=False; p.hand.clear(); p.card=card; p.credited_eliminations=0
         for p, hand in zip(s.players, allocation): p.hand.extend(hand)

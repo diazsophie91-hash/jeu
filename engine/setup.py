@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import replace
+from itertools import combinations
 from rules.cards import Token, condition_matches
 from rules.config import GameConfig, GameMode, ConfigurationError, _complete_setup_possible
 from rules.rules import evaluate_defeat_conditions
@@ -28,7 +29,9 @@ def create_game(player_ids: list[str] | tuple[str, ...], config: GameConfig, see
     if rng is not None and seed is not None:
         raise ConfigurationError("Fournissez une graine ou un générateur aléatoire, pas les deux.")
     rng = rng if rng is not None else random.Random(seed)
-    cards = list(config.card_pool.draw(len(ids), rng) if config.card_pool is not None else config.cards)
+    cards = list(config.card_pool.draw_usable(len(ids), rng, config.colors, config.mode,
+                                               config.initial_hand_size)
+                 if config.card_pool is not None else config.cards)
     if config.card_pool is None:
         rng.shuffle(cards)
     active_config = replace(config, cards=tuple(cards), card_pool=None) if config.card_pool is not None else config
@@ -37,7 +40,8 @@ def create_game(player_ids: list[str] | tuple[str, ...], config: GameConfig, see
         color for color, n in config.colors.items() for _ in range(n))]
     rng.shuffle(tokens)
     players = [PlayerState(pid, card=cards[i]) for i, pid in enumerate(ids)]
-    allocation, bag = _deal_valid_hands(players, tokens, active_config, rng)
+    allocation, bag = _deal_valid_hands(players, tokens, active_config, rng,
+                                        ensure_feasible=config.card_pool is not None)
     for player, hand in zip(players, allocation):
         player.hand.extend(hand)
     active = first_player_id
@@ -59,7 +63,7 @@ def create_game(player_ids: list[str] | tuple[str, ...], config: GameConfig, see
     return GameEngine(state, rng)
 
 
-def _deal_valid_hands(players, tokens, config, rng):
+def _deal_valid_hands(players, tokens, config, rng, *, ensure_feasible=False):
     """Deal one hand at a time; rejected hands return to the opaque common bag."""
     common = list(tokens)
     rng.shuffle(common)
@@ -83,11 +87,37 @@ def _deal_valid_hands(players, tokens, config, rng):
             remaining_stock = {c: sum(t.color == c for t in remaining) for c in config.colors}
             if not _complete_setup_possible([p.card for p in players[index+1:]], remaining_stock,
                                             config.mode, config.initial_hand_size):
-                raise SetupError("La mise en place s'arrête : les collections déjà tirées ne laissent aucune distribution complète valide.")
+                if not ensure_feasible:
+                    raise SetupError("La mise en place s'arrête : les collections déjà tirées ne laissent aucune distribution complète valide.")
+                common = remaining + drawn
+                rng.shuffle(common)
+                continue
             hands.append(drawn)
             common = remaining
             accepted = True
             break
+        if not accepted and ensure_feasible:
+            remaining_cards = [p.card for p in players[index+1:]]
+            feasible_hands = []
+            for candidate in combinations(common, config.initial_hand_size):
+                counts = {c: sum(t.color == c for t in candidate) for c in config.colors}
+                if any(evaluate_defeat_conditions(player.card, candidate)) or (
+                    config.mode is GameMode.SECRET_OBJECTIVE
+                    and condition_matches(player.card.victory, counts)
+                ):
+                    continue
+                candidate_ids = {t.id for t in candidate}
+                remaining = [t for t in common if t.id not in candidate_ids]
+                remaining_stock = {c: sum(t.color == c for t in remaining) for c in config.colors}
+                if _complete_setup_possible(remaining_cards, remaining_stock, config.mode,
+                                            config.initial_hand_size):
+                    feasible_hands.append(candidate)
+            if feasible_hands:
+                drawn = feasible_hands[rng.randrange(len(feasible_hands))]
+                draw_ids = {t.id for t in drawn}
+                hands.append(list(drawn))
+                common = [t for t in common if t.id not in draw_ids]
+                accepted = True
         if not accepted:
             raise SetupError(f"La mise en place s'arrête après {config.max_setup_attempts} tirages invalides pour un joueur ; aucune carte ni condition n'a été révélée.")
     return hands, common

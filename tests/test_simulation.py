@@ -2,6 +2,7 @@ import pytest
 
 from agents import ColorClaimCommunication, ScriptedCommunication, ScriptedDecision, SilentCommunication
 from engine.transitions import GameEngine
+from engine.selection import FirstPlayerMethod, select_first_player
 from rules import Card, Condition, ConditionKind, GameConfig, GameMode, Succession
 from simulation import AgentPolicy, SimulationError, SimulationLimitError, run_campaign, run_game, summarize
 
@@ -33,6 +34,29 @@ def test_t63_complete_game_uses_controller_api_and_reproduces_with_same_seed():
     assert first.actions == 3
     assert first.configuration["first_player_id"] == "a"
     assert first.configuration["round_starter_policy"] == "rotate_by_round_number"
+
+
+@pytest.mark.parametrize(("method", "selection_kwargs", "expected"), [
+    (FirstPlayerMethod.COLLECTIVE, {"collective_choice": "b"},
+     {"player_id": "b", "method": "collective_choice", "resolution": "collective_choice",
+      "tied_candidates": ()}),
+    (FirstPlayerMethod.MOST_RECENT_GIFT, {"gift_recency": {"a": 2, "b": 8}},
+     {"player_id": "b", "method": "most_recent_real_gift", "resolution": "most_recent_gift",
+      "tied_candidates": ()}),
+    (FirstPlayerMethod.MOST_RECENT_GIFT,
+     {"gift_recency": {"a": 8, "b": 8}, "consensus_choice": "a"},
+     {"player_id": "a", "method": "most_recent_real_gift", "resolution": "group_consensus",
+      "tied_candidates": ("a", "b")}),
+])
+def test_t79_run_game_preserves_first_player_selection_audit(method, selection_kwargs, expected):
+    selection = select_first_player(["a", "b"], method, **selection_kwargs)
+    run = run_game(quick_config(), ["a", "b"], seed=765, selection=selection)
+    assert run.first_player_event.kind == "first_player_selected"
+    assert run.first_player_event.data == expected
+    assert run.configuration["first_player_method"] == expected["method"]
+    assert run.configuration["first_player_resolution"] == expected["resolution"]
+    if expected["resolution"] == "group_consensus":
+        assert run.first_player_event.data["resolution"] != "direct"
 
 
 def test_t10_t63_agents_execute_spontaneous_question_lie_response_and_silence_strategies():

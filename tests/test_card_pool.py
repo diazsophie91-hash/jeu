@@ -29,6 +29,45 @@ def test_t55_valid_sufficient_pool_distributes_unique_compatible_cards():
     assert {card.id for card in game._state.config.cards} <= {card.id for card in pool.cards}
 
 
+def test_t55_pool_rejects_a_card_that_cannot_have_any_valid_initial_collection():
+    impossible = Card("impossible", Condition(ConditionKind.TOTAL_COUNT, threshold=1))
+    safe = Card("safe", Condition(ConditionKind.TOTAL_COUNT, threshold=99))
+    red_a = Card("red-a", Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=99))
+    red_b = Card("red-b", Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=99))
+    pool = CardPool((impossible, safe, red_a, red_b),
+                    {ConditionKind.TOTAL_COUNT: 2, ConditionKind.COLOR_COUNT: 2})
+    config = GameConfig({"rouge": 2, "bleu": 2}, GameMode.LAST_SURVIVOR,
+                        card_pool=pool, initial_hand_size=1)
+    with pytest.raises(ConfigurationError, match="impossible.*aucune collection initiale valide"):
+        config.validate(2)
+
+
+def test_t55_impossible_card_subsets_are_filtered_when_usable_subsets_exist():
+    red_only = Condition(ConditionKind.COLOR_COUNT, colors=("bleu",), threshold=1)
+    safe = Condition(ConditionKind.TOTAL_COUNT, threshold=99)
+    pool = CardPool((Card("red-a", red_only), Card("red-b", red_only),
+                     Card("safe-a", safe), Card("safe-b", safe)),
+                    {ConditionKind.COLOR_COUNT: 2, ConditionKind.TOTAL_COUNT: 2})
+    config = GameConfig({"rouge": 1, "bleu": 3}, GameMode.LAST_SURVIVOR,
+                        card_pool=pool, initial_hand_size=1)
+    config.validate(2)
+    for seed in range(20):
+        game = create_game(["a", "b"], config, seed=seed, first_player_id="a")
+        selected = {card.id for card in game._state.config.cards}
+        assert not {"red-a", "red-b"} <= selected
+        assert len(selected) == 2
+
+
+def test_t55_pool_with_no_usable_card_combination_is_rejected_explicitly():
+    red_only = Condition(ConditionKind.COLOR_COUNT, colors=("bleu",), threshold=1)
+    pool = CardPool((Card("red-a", red_only), Card("red-b", red_only)),
+                    {ConditionKind.COLOR_COUNT: 2})
+    config = GameConfig({"rouge": 1, "bleu": 1}, GameMode.LAST_SURVIVOR,
+                        card_pool=pool, initial_hand_size=1)
+    with pytest.raises(ConfigurationError, match="Aucune combinaison.*distribution initiale complète et valide"):
+        create_game(["a", "b"], config, seed=1, first_player_id="a")
+
+
 def test_t55_insufficient_pool_is_rejected_before_setup():
     with pytest.raises(ConfigurationError, match="Réserve insuffisante"):
         create_game(["a", "b", "c", "d", "e"], pool_config(valid_pool()), seed=1, first_player_id="a")

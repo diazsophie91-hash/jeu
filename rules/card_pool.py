@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
+from itertools import combinations
 from types import MappingProxyType
 from typing import Mapping
 
@@ -45,3 +46,37 @@ class CardPool:
         if len({card.id for card in selected}) != count:
             raise RuntimeError("La sélection de cartes a produit un doublon.")
         return selected
+
+    def validate_setup(self, count: int, stock, mode, hand_size: int) -> None:
+        """Reject unusable cards and reserves before any random subset is selected."""
+        self.validate_for(count)
+        from .config import _complete_setup_possible
+
+        for card in self.cards:
+            if not _complete_setup_possible((card,), stock, mode, hand_size):
+                raise ValueError(
+                    f"La carte {card.id!r} ne permet aucune collection initiale valide "
+                    "avec le stock et les paramètres configurés."
+                )
+        if not any(_complete_setup_possible(selection, stock, mode, hand_size)
+                   for selection in combinations(self.cards, count)):
+            raise ValueError(
+                "Aucune combinaison de cartes de la réserve ne permet une distribution "
+                "initiale complète et valide avec le stock configuré."
+            )
+
+    def draw_usable(self, count: int, rng, stock, mode, hand_size: int) -> tuple[Card, ...]:
+        """Choose reproducibly among subsets that can all be dealt validly."""
+        self.validate_for(count)
+        from .config import _complete_setup_possible
+
+        usable = tuple(selection for selection in combinations(self.cards, count)
+                       if _complete_setup_possible(selection, stock, mode, hand_size))
+        if not usable:
+            raise ValueError(
+                "Aucune combinaison de cartes de la réserve ne permet une distribution "
+                "initiale complète et valide avec le stock configuré."
+            )
+        selected = list(usable[rng.randrange(len(usable))])
+        rng.shuffle(selected)
+        return tuple(selected)

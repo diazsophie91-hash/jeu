@@ -102,8 +102,14 @@ class GameConfig:
             if card.victory and any(_conditions_overlap(defeat, card.victory, self.colors)
                                     for defeat in card.defeat_conditions):
                 raise ConfigurationError(f"La carte {card.id!r} peut gagner et perdre simultanément.")
-        if self.card_pool is None and not _complete_setup_possible(cards, self.colors, self.mode, self.initial_hand_size):
-            raise ConfigurationError("Aucune attribution complète de collections de départ valides n'est possible avec ces cartes et ce stock.")
+        if self.card_pool is None:
+            if not _complete_setup_possible(cards, self.colors, self.mode, self.initial_hand_size):
+                raise ConfigurationError("Aucune attribution complète de collections de départ valides n'est possible avec ces cartes et ce stock.")
+        else:
+            try:
+                self.card_pool.validate_setup(player_count, self.colors, self.mode, self.initial_hand_size)
+            except ValueError as exc:
+                raise ConfigurationError(str(exc)) from exc
 
 
 def _conditions_overlap(a, b, stock):
