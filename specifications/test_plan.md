@@ -411,26 +411,6 @@ Faire gagner un joueur en tant que dernier survivant avant qu'il n'atteigne le s
 
 Vérifier que le bonus de manche prévu est attribué.
 
-### T64 — Égalité terminale après une chaîne d'éliminations
-
-Créer un scénario dans lequel une action initiale provoque plusieurs éliminations, puis une chaîne d'éliminations forcées qui se termine par une égalité terminale.
-
-Vérifier que :
-- Les points valablement attribués avant la dernière élimination sont conservés.
-- La dernière élimination ne rapporte aucun point.
-- Aucun bonus de manche n'est attribué.
-- La partie se termine sans vainqueur.
-
-### T65 — Action initiale éliminant directement tous les joueurs
-
-Créer un scénario dans lequel l'action initiale élimine directement tous les joueurs encore en jeu.
-
-Vérifier que :
-- La partie se termine sur une égalité sans vainqueur.
-- Aucun point n'est attribué au titre de cette action.
-- Aucun bonus de manche n'est attribué.
-- Aucun point n'est annulé ou ajouté rétroactivement.
-
 ## 9. Tests du mode Points et manches : C1 et C2
 
 ### T42 — Réinitialisation entre les manches
@@ -649,3 +629,23 @@ Avant de lancer des simulations massives, vérifier que :
 - Les configurations et les graines aléatoires peuvent être enregistrées pour reproduire les résultats.
 
 L'équilibrage du jeu devra ensuite être étudié séparément à partir de simulations suffisamment nombreuses et de statistiques explicites.
+
+### T64 — Égalité terminale après une chaîne d'éliminations
+
+Créer un scénario dans lequel une action initiale provoque plusieurs éliminations, puis une chaîne d'éliminations forcées qui se termine par une égalité terminale.
+
+Vérifier que :
+- Les points valablement attribués avant la dernière élimination sont conservés.
+- La dernière élimination ne rapporte aucun point.
+- Aucun bonus de manche n'est attribué.
+- La partie se termine sans vainqueur.
+
+### T65 — Action initiale éliminant directement tous les joueurs
+
+Créer un scénario dans lequel l'action initiale élimine directement tous les joueurs encore en jeu.
+
+Vérifier que :
+- La partie se termine sur une égalité sans vainqueur.
+- Aucun point n'est attribué au titre de cette action.
+- Aucun bonus de manche n'est attribué.
+- Aucun point n'est annulé ou ajouté rétroactivement.

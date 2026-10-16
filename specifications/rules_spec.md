@@ -101,8 +101,6 @@ Lorsque le sac commun contient encore des jetons, le destinataire tire un jeton 
 
 ### 4.3. Après le retrait d'un jeton par le donneur
 
-### 4.3. Après le retrait d'un jeton par le donneur
-
 Une variante de test détermine si la condition de défaite du donneur est vérifiée immédiatement après le retrait du jeton de son sac, avant la décision du destinataire.
 
 Si cette option est activée :
@@ -233,8 +231,6 @@ Une victoire secrète provoque également la révélation complète de la carte 
 
 ### 8.3. Égalité terminale
 
-### 8.3. Égalité terminale
-
 Si tous les joueurs encore en jeu sont éliminés par la même résolution, la partie se termine sur une égalité sans vainqueur.
 
 Il faut distinguer deux situations en mode Points et manches.
@@ -307,8 +303,6 @@ Si le donneur est éliminé à cause de sa propre condition après avoir retiré
 Si le destinataire est également éliminé par la même action, le point dû pour son élimination est attribué au donneur, même si celui-ci est également éliminé, sauf si l'action initiale élimine directement tous les joueurs encore en jeu.
 
 Si l'action initiale ne provoque pas à elle seule l'élimination de tous les joueurs, le point valablement attribué pour l'élimination du destinataire est conservé, même si une chaîne ultérieure aboutit à une égalité terminale.
-
-### 10.4. Chaîne d'éliminations en variante B
 
 ### 10.4. Chaîne d'éliminations en variante B
 

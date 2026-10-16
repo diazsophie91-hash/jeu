@@ -65,7 +65,9 @@ Chaque joueur doit posséder les informations suivantes.
 
 L'ordre des joueurs autour de la table doit être conservé même après des éliminations. Il sert à déterminer le prochain joueur actif dans les variantes de succession.
 
-Un joueur éliminé reste présent dans l'état de la partie pour préserver son identité, sa position, son score et l'historique de ses actions. Il ne doit cependant plus pouvoir effectuer d'action normale.
+Un joueur éliminé reste présent dans l'état de la partie pour préserver son identité, sa position, son score et l'historique de ses actions. Il ne peut plus commencer d'action normale.
+
+Toutefois, si un joueur est éliminé après avoir retiré un jeton pour proposer un cadeau, cette proposition reste en cours. Le destinataire doit encore décider d'accepter ou de refuser, et le cadeau doit être résolu normalement. L'élimination du donneur ne doit donc pas interrompre automatiquement l'action déjà engagée.
 
 ## 5. Représentation des jetons
 
@@ -146,12 +148,16 @@ Pendant la résolution d'un cadeau ou d'un tirage, le moteur doit pouvoir mémor
 - Décision du destinataire : accepter ou refuser, lorsqu'elle s'applique.
 - Origine du jeton : cadeau accepté, tirage après refus ou tirage nécessaire à un rejeu.
 - Étape actuelle de résolution.
+- Statut du donneur : en jeu ou éliminé pendant la résolution de l'action.
+- État de la proposition : en attente de la décision du destinataire, acceptée ou refusée.
 - Joueurs dont les conditions doivent encore être vérifiées.
 - Joueurs éliminés par l'action.
 - Attribution éventuelle de points.
 - Position de départ pour la succession des joueurs actifs.
 
 Ces données temporaires permettent de résoudre correctement les situations où plusieurs éliminations se produisent à la suite d'une même action.
+
+Si le donneur est éliminé après le retrait du jeton mais avant la décision du destinataire, le moteur doit conserver l'action en cours et le jeton proposé en main. Le destinataire doit pouvoir accepter ou refuser selon les règles normales. L'action ne se termine qu'après la résolution du cadeau, des conditions applicables, des éventuelles éliminations et des règles de succession.
 
 Le moteur doit terminer la résolution de l'action avant de passer à une nouvelle action normale.
 

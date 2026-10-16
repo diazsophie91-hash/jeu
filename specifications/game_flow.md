@@ -50,14 +50,20 @@ Le tour commence avec un joueur actif.
 1. Le joueur actif choisit un autre joueur encore en jeu.
 2. Le joueur actif choisit consciemment un jeton dans son sac personnel.
 3. Il place ce jeton dans sa main sans en révéler la couleur.
-4. Il propose le cadeau au joueur choisi.
-5. Le destinataire décide de l'accepter ou de le refuser sans avoir vu le jeton.
-6. Le cadeau est résolu selon la décision du destinataire.
-7. Les conditions applicables sont vérifiées.
-8. Le jeu détermine les éventuelles éliminations, les points et le joueur actif suivant.
-9. Le tour se termine, sauf si une victoire immédiate ou une égalité terminale met fin à la partie.
+4. Si la variante de vérification de la condition du donneur après retrait est activée, le donneur vérifie immédiatement sa condition de défaite à partir de sa collection après retrait, avant que le destinataire décide d'accepter ou de refuser.
+5. Si cette condition est satisfaite, le donneur est éliminé et révèle sa carte secrète complète. La proposition de cadeau reste en cours : le destinataire doit toujours décider d'accepter ou de refuser. Cette élimination n'est jamais annulée par la suite.
+6. Le donneur propose le cadeau au destinataire sans révéler le jeton.
+7. Le destinataire décide de l'accepter ou de le refuser sans avoir vu le jeton. Si le sac commun est vide, le refus est impossible.
+8. Le cadeau est résolu selon la décision du destinataire et les règles applicables au sac commun.
+9. Les conditions applicables au destinataire sont vérifiées après le transfert ou le tirage correspondant. En mode Objectif secret, sa condition de victoire est également vérifiée lorsque l'événement le permet.
+10. Le jeu termine la résolution des éventuelles éliminations, des points et des conditions de fin de partie, puis détermine le joueur actif suivant selon la variante de succession.
+11. Le tour se termine, sauf si une victoire immédiate ou une égalité terminale met fin à la partie.
 
-Un joueur éliminé ne peut plus être choisi comme destinataire ni effectuer d'action normale.
+La vérification de la condition de défaite du donneur après retrait est désactivée lorsque la variante correspondante n'est pas sélectionnée.
+
+Le retrait d'un jeton par le donneur ne déclenche jamais sa condition de victoire personnelle en mode Objectif secret, même si cette condition semble satisfaite après le retrait.
+
+Un joueur éliminé ne peut plus effectuer d'action normale ni être choisi comme destinataire. Toutefois, si son élimination survient après le retrait d'un jeton alors que la proposition de cadeau est en cours, cette proposition est résolue normalement avant de déterminer la succession.
 
 ## 5. Annonces et mensonges
 
@@ -78,18 +84,6 @@ Avant la résolution du cadeau, le destinataire ne connaît pas la véritable id
 5. Le jeu résout les éventuelles éliminations et détermine la suite du tour.
 
 Si le destinataire satisfait sa condition de victoire en recevant le cadeau, la partie s'arrête immédiatement. Il révèle alors sa carte secrète complète à tous les joueurs avant que sa victoire soit déclarée.
-
-### Vérification de la condition du donneur après retrait
-
-Lorsque la variante est activée, la condition de défaite du donneur est vérifiée immédiatement après qu'il a retiré le jeton de son sac et l'a placé dans sa main, avant que le destinataire décide d'accepter ou de refuser.
-
-Si cette condition est satisfaite, le donneur est éliminé et révèle sa carte secrète complète. La proposition de cadeau reste néanmoins en cours et le destinataire doit encore décider de l'accepter ou de la refuser.
-
-L'élimination du donneur n'est pas annulée par un éventuel refus. Le cadeau et ses conséquences sont résolus normalement, puis le joueur actif suivant est déterminé selon les règles de succession.
-
-La victoire personnelle du donneur n'est jamais vérifiée à la suite du simple retrait d'un jeton.
-
-Le retrait d'un jeton par le donneur ne peut jamais déclencher à lui seul sa condition de victoire en mode Objectif secret.
 
 ## 7. Si le destinataire refuse le cadeau
 
@@ -152,7 +146,11 @@ Si le joueur sélectionné est encore en jeu mais possède un sac personnel vide
 3. Les éventuels jetons de son sac personnel sont remis dans le sac commun.
 4. La succession continue dans le sens horaire depuis sa position.
 
-En mode Points et manches, chaque élimination forcée de cette chaîne est attribuée au joueur dont l'action initiale a déclenché la chaîne et rapporte un point, sauf lorsque la résolution aboutit à une égalité terminale sans vainqueur.
+En mode Points et manches, chaque élimination forcée non terminale de cette chaîne rapporte un point au joueur responsable de l'action initiale.
+
+Si une élimination forcée ultérieure élimine tous les joueurs encore en jeu, cette dernière élimination ne rapporte aucun point. Les points valablement attribués aux éliminations précédentes de la chaîne sont conservés. Aucun bonus de manche n'est accordé pour cette résolution terminale.
+
+Si l'action initiale élimine directement tous les joueurs encore en jeu, aucun point ni bonus n'est attribué au titre de cette action.
 
 ## 9. Règles communes aux éliminations
 
