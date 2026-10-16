@@ -45,25 +45,27 @@ La méthode utilisée peut être définie avant le début de la partie.
 
 ## 4. Déroulement normal d'un tour
 
+## 4. Déroulement normal d'un tour
+
 Le tour commence avec un joueur actif.
 
 1. Le joueur actif choisit un autre joueur encore en jeu.
-2. Le joueur actif choisit consciemment un jeton dans son sac personnel.
-3. Il place ce jeton dans sa main sans en révéler la couleur.
-4. Si la variante de vérification de la condition du donneur après retrait est activée, le donneur vérifie immédiatement sa condition de défaite à partir de sa collection après retrait, avant que le destinataire décide d'accepter ou de refuser.
-5. Si cette condition est satisfaite, le donneur est éliminé et révèle sa carte secrète complète. La proposition de cadeau reste en cours : le destinataire doit toujours décider d'accepter ou de refuser. Cette élimination n'est jamais annulée par la suite.
-6. Le donneur propose le cadeau au destinataire sans révéler le jeton.
-7. Le destinataire décide de l'accepter ou de le refuser sans avoir vu le jeton. Si le sac commun est vide, le refus est impossible.
-8. Le cadeau est résolu selon la décision du destinataire et les règles applicables au sac commun.
-9. Les conditions applicables au destinataire sont vérifiées après le transfert ou le tirage correspondant. En mode Objectif secret, sa condition de victoire est également vérifiée lorsque l'événement le permet.
-10. Le jeu termine la résolution des éventuelles éliminations, des points et des conditions de fin de partie, puis détermine le joueur actif suivant selon la variante de succession.
+2. Le donneur choisit consciemment un jeton dans son sac personnel.
+3. Il retire ce jeton et le place dans sa main sans en révéler la couleur. La proposition de cadeau est engagée.
+4. Si la variante de vérification de la condition du donneur après retrait est activée, sa condition de défaite est vérifiée immédiatement après le retrait et avant la décision du destinataire.
+5. Si cette condition est satisfaite, le donneur est éliminé et révèle sa carte secrète complète. La proposition de cadeau reste en cours : le destinataire doit toujours pouvoir décider d'accepter ou de refuser.
+6. Le donneur présente le cadeau au destinataire sans révéler le jeton. Les annonces éventuelles restent facultatives et peuvent être mensongères.
+7. Le destinataire décide d'accepter ou de refuser sans avoir vu le jeton. Si le sac commun est vide au moment de la décision, le refus est impossible.
+8. Le cadeau est résolu conformément aux règles d'acceptation ou de refus et à l'état du sac commun.
+9. Après le transfert ou le tirage correspondant, les conditions applicables au destinataire sont vérifiées. En mode Objectif secret, sa condition de victoire est vérifiée uniquement lorsque l'événement le permet.
+10. Le moteur résout les éventuelles éliminations supplémentaires, les points et les conditions de fin de partie, puis détermine le joueur actif suivant selon la variante de succession.
 11. Le tour se termine, sauf si une victoire immédiate ou une égalité terminale met fin à la partie.
 
 La vérification de la condition de défaite du donneur après retrait est désactivée lorsque la variante correspondante n'est pas sélectionnée.
 
-Le retrait d'un jeton par le donneur ne déclenche jamais sa condition de victoire personnelle en mode Objectif secret, même si cette condition semble satisfaite après le retrait.
+Le retrait d'un jeton par le donneur ne déclenche jamais sa condition de victoire personnelle en mode Objectif secret.
 
-Un joueur éliminé ne peut plus effectuer d'action normale ni être choisi comme destinataire. Toutefois, si son élimination survient après le retrait d'un jeton alors que la proposition de cadeau est en cours, cette proposition est résolue normalement avant de déterminer la succession.
+Un joueur éliminé ne peut plus commencer d'action normale ni être choisi comme destinataire. Toutefois, si son élimination intervient alors que sa proposition de cadeau est en cours, celle-ci doit être résolue normalement avant de déterminer la succession.
 
 ## 5. Annonces et mensonges
 
