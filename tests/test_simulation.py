@@ -1,6 +1,8 @@
 import pytest
 
-from agents import ColorClaimCommunication, ScriptedCommunication, ScriptedDecision, SilentCommunication
+from agents import (ColorClaimCommunication, ScriptedCommunication, ScriptedDecision,
+                    SilentCommunication)
+from engine.actions import AcceptGift, ChooseRecipient, ProposeGift
 from engine.transitions import GameEngine
 from engine.selection import FirstPlayerMethod, select_first_player
 from rules import Card, Condition, ConditionKind, GameConfig, GameMode, Succession
@@ -57,6 +59,48 @@ def test_t79_run_game_preserves_first_player_selection_audit(method, selection_k
     assert run.configuration["first_player_resolution"] == expected["resolution"]
     if expected["resolution"] == "group_consensus":
         assert run.first_player_event.data["resolution"] != "direct"
+
+
+def test_mode_c_terminal_tie_runs_through_real_runner_without_round_awards():
+    class GiveRedAndAccept:
+        name = "give_red_and_accept"
+
+        def choose_action(self, view, legal_actions, messages=()):
+            if isinstance(legal_actions[0], ChooseRecipient):
+                return next(action for action in legal_actions if action.recipient_id == "b")
+            if isinstance(legal_actions[0], ProposeGift):
+                red_ids = {token.id for token in view.hand if token.color == "rouge"}
+                return next(action for action in legal_actions if action.token_id in red_ids)
+            return next((action for action in legal_actions if isinstance(action, AcceptGift)),
+                        legal_actions[0])
+
+    from rules import PointsFormat
+
+    exact_two_red = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",),
+                              threshold=2, exact=True)
+    config = GameConfig(
+        {"rouge": 4, "bleu": 2}, GameMode.POINTS,
+        (Card("a-red-risk", exact_two_red), Card("b-red-risk", exact_two_red)),
+        succession=Succession.CLOCKWISE,
+        points_format=PointsFormat.FIXED_ROUNDS,
+        donor_defeat_after_removal=True,
+        elimination_threshold=9,
+        initial_hand_size=3,
+    )
+    policies = {player_id: AgentPolicy(GiveRedAndAccept()) for player_id in ("a", "b")}
+    run = run_game(config, ("a", "b"), seed=1, first_player_id="a", policies=policies)
+
+    assert run.outcome == "terminal_tie"
+    assert run.winners == () and run.terminal_ties == 1
+    assert run.actions == 3  # choose recipient, propose, accept
+    assert run.rounds_completed == 0 and run.round_summaries == ()
+    assert run.final_scores == {"a": 0, "b": 0}
+    assert run.final_credited_eliminations == {"a": 0, "b": 0}
+    assert all(player.round_eliminated for player in run.players)
+    assert all(player.game_player_result == "tied" for player in run.players)
+    assert all(player.round_completed is False and player.round_result is None
+               and player.round_score is None and player.round_credited_eliminations is None
+               for player in run.players)
 
 
 def test_t10_t63_agents_execute_spontaneous_question_lie_response_and_silence_strategies():

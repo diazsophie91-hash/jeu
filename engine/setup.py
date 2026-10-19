@@ -40,8 +40,7 @@ def create_game(player_ids: list[str] | tuple[str, ...], config: GameConfig, see
         color for color, n in config.colors.items() for _ in range(n))]
     rng.shuffle(tokens)
     players = [PlayerState(pid, card=cards[i]) for i, pid in enumerate(ids)]
-    allocation, bag = _deal_valid_hands(players, tokens, active_config, rng,
-                                        ensure_feasible=config.card_pool is not None)
+    allocation, bag = _deal_valid_hands(players, tokens, active_config, rng)
     for player, hand in zip(players, allocation):
         player.hand.extend(hand)
     active = first_player_id
@@ -63,7 +62,7 @@ def create_game(player_ids: list[str] | tuple[str, ...], config: GameConfig, see
     return GameEngine(state, rng)
 
 
-def _deal_valid_hands(players, tokens, config, rng, *, ensure_feasible=False):
+def _deal_valid_hands(players, tokens, config, rng):
     """Deal one hand at a time; rejected hands return to the opaque common bag."""
     common = list(tokens)
     rng.shuffle(common)
@@ -87,8 +86,9 @@ def _deal_valid_hands(players, tokens, config, rng, *, ensure_feasible=False):
             remaining_stock = {c: sum(t.color == c for t in remaining) for c in config.colors}
             if not _complete_setup_possible([p.card for p in players[index+1:]], remaining_stock,
                                             config.mode, config.initial_hand_size):
-                if not ensure_feasible:
-                    raise SetupError("La mise en place s'arrête : les collections déjà tirées ne laissent aucune distribution complète valide.")
+                # A locally valid draw can still strand later players. Return
+                # it to the bag and retry; the whole configuration was already
+                # checked for feasibility before random dealing began.
                 common = remaining + drawn
                 rng.shuffle(common)
                 continue
@@ -96,7 +96,11 @@ def _deal_valid_hands(players, tokens, config, rng, *, ensure_feasible=False):
             common = remaining
             accepted = True
             break
-        if not accepted and ensure_feasible:
+        if not accepted:
+            # Bounded random retries preserve the normal draw process, then a
+            # deterministic feasibility search prevents a valid setup from
+            # failing solely because the random sequence kept choosing dead
+            # ends. Select uniformly from the feasible first hands using rng.
             remaining_cards = [p.card for p in players[index+1:]]
             feasible_hands = []
             for candidate in combinations(common, config.initial_hand_size):

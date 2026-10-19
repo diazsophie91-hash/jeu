@@ -39,6 +39,39 @@ def points_config(cards, stock, *, threshold=10, donor_defeat_after_removal=Fals
 
 
 class ConditionValidationTests(unittest.TestCase):
+    def test_exact_and_minimum_composition_semantics_include_unlisted_colors(self):
+        exact = Condition(
+            ConditionKind.COMPOSITION,
+            composition=(("bleu", 2), ("jaune", 2), ("vert", 1)),
+            exact=True,
+        )
+        self.assertTrue(condition_matches(exact, {"bleu": 2, "jaune": 2, "vert": 1}))
+        self.assertFalse(condition_matches(
+            exact, {"bleu": 2, "jaune": 2, "vert": 1, "rouge": 1}))
+        self.assertFalse(condition_matches(exact, {"bleu": 2, "jaune": 2}))
+        self.assertFalse(condition_matches(
+            exact, {"bleu": 1, "jaune": 2, "vert": 1}))
+
+        minimum = Condition(
+            ConditionKind.COMPOSITION,
+            composition=(("bleu", 2), ("jaune", 2), ("vert", 1)),
+        )
+        self.assertTrue(condition_matches(
+            minimum, {"bleu": 2, "jaune": 2, "vert": 1, "rouge": 1}))
+        self.assertTrue(condition_matches(
+            minimum, {"bleu": 3, "jaune": 2, "vert": 1}))
+
+    def test_exact_composition_overlap_validation_uses_complete_composition(self):
+        defeat = Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=1)
+        exact_victory = Condition(
+            ConditionKind.COMPOSITION,
+            composition=(("bleu", 2), ("jaune", 2), ("vert", 1)),
+            exact=True,
+        )
+        self.assertFalse(_conditions_overlap(defeat, exact_victory, {
+            "rouge": 4, "bleu": 4, "jaune": 4, "vert": 4,
+        }))
+
     def test_repeated_candidate_colors_are_rejected_by_configuration(self):
         cases = (
             Condition(ConditionKind.TWO_PAIRS, colors=("rouge", "rouge")),

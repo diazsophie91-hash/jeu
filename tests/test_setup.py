@@ -122,9 +122,13 @@ def test_t82_impossible_setup_is_rejected_before_game_creation():
         create_game(["a", "b"], config, seed=0, first_player_id="a")
 
 
-def test_t82_retry_limit_exhaustion_is_explicit_and_keeps_cards_private():
+def test_t82_retry_limit_uses_feasible_fallback_after_random_dead_ends():
     cards = (Card("a", Condition(ConditionKind.COLOR_COUNT, colors=("rouge",), threshold=1)), safe_card("b"))
     config = GameConfig({"rouge": 3, "bleu": 3}, GameMode.LAST_SURVIVOR, cards, max_setup_attempts=2)
     rng = ScriptedRNG([["rouge", "bleu", "bleu"], ["rouge", "bleu", "bleu"]])
-    with pytest.raises(SetupError, match="aucune carte ni condition n'a été révélée"):
-        create_game(["a", "b"], config, first_player_id="a", rng=rng)
+    game = create_game(["a", "b"], config, first_player_id="a", rng=rng)
+    assert all(len(player.hand) == 3 and player.alive and not player.revealed
+               for player in game._state.players)
+    assert not any(event.kind in {"player_eliminated", "card_revealed"}
+                   for event in game.public_event_history())
+    game.assert_invariants()

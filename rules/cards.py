@@ -136,8 +136,13 @@ def condition_matches(condition: Condition, counts: Mapping[str, int]) -> bool:
     if kind is ConditionKind.COMPOSITION:
         if not condition.composition:
             raise ValueError("COMPOSITION exige une composition.")
-        return all((counts.get(c, 0) == n if condition.exact else counts.get(c, 0) >= n)
-                   for c, n in condition.composition)
+        matches = all((counts.get(c, 0) == n if condition.exact else counts.get(c, 0) >= n)
+                      for c, n in condition.composition)
+        if condition.exact:
+            # An exact composition defines the whole collection: no unlisted
+            # color (or extra token) may be present.
+            return matches and total == sum(n for _, n in condition.composition)
+        return matches
     if kind is ConditionKind.EQUAL_COUNTS:
         if len(condition.colors) != 2 or condition.minimum is None:
             raise ValueError("EQUAL_COUNTS exige deux couleurs et un minimum explicite.")

@@ -427,8 +427,7 @@ class GameEngine:
         from .setup import _deal_valid_hands
         from .state import PlayerState
         candidates = [PlayerState(p.id, card=card) for p,card in zip(s.players,cards)]
-        allocation, common_bag = _deal_valid_hands(candidates, tokens, active_config, self._rng,
-                                                    ensure_feasible=s.card_pool is not None)
+        allocation, common_bag = _deal_valid_hands(candidates, tokens, active_config, self._rng)
         for p, card in zip(s.players, cards):
             p.alive=True; p.revealed=False; p.hand.clear(); p.card=card; p.credited_eliminations=0
         for p, hand in zip(s.players, allocation): p.hand.extend(hand)
