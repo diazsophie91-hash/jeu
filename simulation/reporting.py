@@ -153,6 +153,11 @@ def write_campaign(campaign, statistics, output_dir):
             "min_gifts": gift.get("min"), "max_gifts": gift.get("max"),
             "average_rounds": item.get("rounds_played", {}).get("mean"),
             "average_simulation_seconds": duration.get("mean"),
+            "player_round_observations": item.get("players_observed"),
+            "game_final_score_mean": item.get("game_final_score_distribution", {}).get("mean"),
+            "game_final_score_observations": item.get("game_final_score_distribution", {}).get("n"),
+            "round_end_cumulative_score_mean": item.get("round_end_cumulative_score_distribution", {}).get("mean"),
+            "round_end_score_observations": item.get("round_end_cumulative_score_distribution", {}).get("n"),
             "early_eliminations": early.get("eliminated_early"),
             "early_elimination_denominator": early.get("player_round_denominator"),
             "early_elimination_rate": early.get("proportion_of_player_rounds"),
@@ -161,7 +166,9 @@ def write_campaign(campaign, statistics, output_dir):
         })
     columns = ["configuration_profile", "mode", "games_completed", "games_failed", "terminal_tie_games",
                "average_actions", "average_gifts", "median_gifts", "p90_gifts", "p95_gifts", "min_gifts",
-               "max_gifts", "average_rounds", "average_simulation_seconds", "early_eliminations",
+               "max_gifts", "average_rounds", "average_simulation_seconds", "player_round_observations",
+               "game_final_score_mean", "game_final_score_observations", "round_end_cumulative_score_mean",
+               "round_end_score_observations", "early_eliminations",
                "early_elimination_denominator", "early_elimination_rate", "early_elimination_ci95",
                "message_count"]
     _csv_write(output / "summary.csv", summary_rows, columns)
@@ -180,7 +187,10 @@ def write_campaign(campaign, statistics, output_dir):
             "agent_seeds_json": json.dumps(to_jsonable(run.agent_seeds), ensure_ascii=False),
             "actions": run.actions, "gifts_proposed": run.turns, "rounds_played": run.rounds,
             "rounds_completed": run.rounds_completed,
-            "outcome": run.outcome, "winners_json": json.dumps(run.winners),
+            "game_result": run.outcome, "winners_json": json.dumps(run.winners),
+            "game_final_scores_json": json.dumps(run.final_scores),
+            "game_final_credited_eliminations_json": json.dumps(run.final_credited_eliminations),
+            "round_summaries_json": json.dumps(to_jsonable(run.round_summaries), ensure_ascii=False),
             "terminal_ties": run.terminal_ties, "score_ties": run.score_ties,
             "score_tiebreaks": run.score_tiebreaks,
             "messages": len(run.messages), "message_types_json": json.dumps(run.message_counts),
@@ -197,12 +207,14 @@ def write_campaign(campaign, statistics, output_dir):
             "configuration_json": json.dumps(to_jsonable(config), ensure_ascii=False),
             "player_count": len(campaign.parameters.get("player_ids", ())),
             "duration_seconds": failure.duration_seconds,
-            "diagnostic": failure.error,
+            "game_result": None, "diagnostic": failure.error,
         })
     game_columns = ["experience", "configuration_profile", "simulation_index", "seed", "status", "mode",
                     "configuration_json", "first_player_id", "first_player_method", "first_player_resolution",
                     "player_count", "strategies_json", "communication_modes_json", "actions", "gifts_proposed",
-                    "agent_seeds_json", "rounds_played", "rounds_completed", "outcome", "winners_json", "terminal_ties", "score_ties",
+                    "agent_seeds_json", "rounds_played", "rounds_completed", "game_result", "winners_json",
+                    "game_final_scores_json", "game_final_credited_eliminations_json", "round_summaries_json",
+                    "terminal_ties", "score_ties",
                     "score_tiebreaks", "messages",
                     "message_types_json", "duration_seconds", "diagnostic"]
     _csv_write(output / "games.csv", game_rows, game_columns)
@@ -215,10 +227,12 @@ def write_campaign(campaign, statistics, output_dir):
                                 "simulation_index": run.simulation_index, "seed": run.seed,
                                 "mode": run.configuration["mode"]})
     player_columns = ["configuration_profile", "simulation_index", "seed", "mode", "player_id", "position",
-                      "round_number", "first_player", "round_starter_id", "card_id", "defeat_families",
-                      "victory_condition", "decision_profile", "communication_profile", "result", "eliminated",
-                      "elimination_turn", "elimination_game_turn", "elimination_reason", "turns_played",
-                      "final_score", "credited_eliminations"]
+                      "round_number", "started_game", "round_starter_id", "card_id", "defeat_families",
+                      "victory_condition", "decision_profile", "communication_profile", "round_result",
+                      "round_completed", "game_result", "game_player_result", "round_eliminated",
+                      "round_elimination_turn", "round_elimination_game_turn", "round_elimination_reason",
+                      "round_turns_played", "round_score", "round_credited_eliminations",
+                      "game_final_score", "game_final_credited_eliminations"]
     _csv_write(output / "players.csv", player_rows, player_columns)
 
     lines = [
@@ -226,26 +240,40 @@ def write_campaign(campaign, statistics, output_dir):
         f"Campagne UTC : {generated_at}", f"Révision Git : {records['git_revision'] or 'indisponible'}", "",
         f"Arbre de travail modifié : {records['git']['working_tree_dirty']}; empreinte des sources : {records['git']['source_fingerprint_sha256']}", "",
         "## Définition des mesures", "",
-        "`actions` compte les commandes légales soumises au moteur; `gifts_proposed` compte les propositions de cadeau et sert de numéro de tour; `rounds_played` compte les manches effectivement commencées. La durée est le temps informatique par partie, dépendant du matériel. Les éliminations précoces sont ici celles qui surviennent au plus tard au seuil expérimental configuré, par défaut les trois premiers cadeaux proposés.", "",
+        "`actions` compte les commandes légales soumises au moteur; `gifts_proposed` compte les propositions de cadeau; `rounds_played` compte les manches commencées. `players.csv` contient une observation par joueur-manche : élimination, motif, tours et carte sont ceux de cette manche. `round_score` et `round_credited_eliminations` ne sont renseignés que lorsqu'un événement `round_finished` existe, et sont capturés à cet événement. `game_result`, `game_player_result`, `game_final_score` et `game_final_credited_eliminations` décrivent la partie complète, jamais une manche. Les modes A et B ne définissent pas de gagnant distinct de manche; les victoires de porteur par carte y sont des victoires de partie, une partie comportant une seule manche selon les transitions actuelles du moteur. En mode C, les victoires de partie par carte sont non applicables; les victoires par carte sont comptées uniquement à partir des gagnants explicites des événements de fin de manche. Une manche C terminée directement par une égalité terminale n'a ni résultat ni score de fin de manche enregistré.", "",
         "Les proportions indiquent leur dénominateur et un intervalle de Wilson à 95 %. Les intervalles des moyennes utilisent une approximation normale à 1,96 erreur standard. Les différences de variantes sont appariées par graine et utilisent un intervalle normal approximatif. Ces résumés sont descriptifs et ne démontrent pas de causalité.", "",
         "## Résultats par configuration et profil", "",
     ]
     for name, item in statistics.by_configuration.items():
         gifts = item.get("gifts_proposed", {})
         early = item.get("early_eliminations", {})
+        game_scores = item.get("game_final_score_distribution", {})
+        round_scores = item.get("round_end_cumulative_score_distribution", {})
+        game_score_text = (f"{game_scores['mean']} (n={game_scores['n']})"
+                           if game_scores.get("n") else "n/a")
+        round_score_text = (f"{round_scores['mean']} (n={round_scores['n']})"
+                            if round_scores.get("n") else "n/a")
         lines.extend([
             f"### {name} — mode {item.get('mode', 'n/a')}", "",
             f"Parties terminées : {item.get('games_completed', 0)}; échecs : {item.get('games_failed', 0)}; résultats : `{item.get('outcomes', {})}`; égalités terminales : {item.get('terminal_tie_games', 0)}; victoires partagées : {item.get('shared_victory_games', 0)}.",
             f"Cadeaux proposés : moyenne {gifts.get('mean')}, médiane {gifts.get('median')}, p90 {gifts.get('p90')}, p95 {gifts.get('p95')}, min {gifts.get('min')}, max {gifts.get('max')}; manches moyennes : {item.get('rounds_played', {}).get('mean')}; secondes de simulation moyennes : {item.get('simulation_seconds', {}).get('mean')}.",
+            f"Scores cumulés de fin de partie (joueur-partie) : {game_score_text}; scores cumulés aux fins de manches (joueur-manche terminé) : {round_score_text}.",
             f"Éliminations précoces (≤ {early.get('experimental_threshold_gifts', statistics.early_elimination_threshold)} cadeaux) : {early.get('eliminated_early', 0)} / {early.get('player_round_denominator', 0)} joueur-manches, taux {early.get('proportion_of_player_rounds')}, IC95 Wilson {_ci_text(early.get('proportion_ci95'))}; motifs : `{early.get('reason_counts', {})}`.",
             f"Messages : {item.get('message_count', 0)}; types : `{item.get('message_types', {})}`.",
             "",
-            "| Carte | Attributions | Victoires du porteur | Éliminations | Tours moyens avant fin | Alerte échantillon |",
-            "|---|---:|---:|---:|---:|---|",
+            "| Carte | Attributions joueur-manche | Victoires de partie (A/B) | Victoires de manche (C) | Manches C terminées | Éliminations par manche | Tours moyens | Échantillon |",
+            "|---|---:|---:|---:|---:|---:|---:|---|",
         ])
         for card_id, card in item.get("cards", {}).items():
             mean_turns = card["mean_turns_before_end"].get("mean")
-            lines.append(f"| {card_id} ({', '.join(card['families'])}) | {card['assignments']} | {card['wins_by_carrier']} | {card['eliminations']} | {mean_turns} | {'insuffisant (<30)' if card['insufficient_sample'] else '—'} |")
+            game_wins = (f"{card['game_wins_by_carrier']}/{card['game_win_denominator']}"
+                         if card["game_wins_by_carrier"] is not None else "n/a")
+            round_wins = (f"{card['round_wins_by_carrier']}/{card['round_win_denominator']}"
+                          if card["round_wins_by_carrier"] is not None else "n/a")
+            completed_rounds = (card["round_win_denominator"]
+                                if card["round_win_denominator"] is not None else "n/a")
+            sample_note = "insuffisant (<30)" if card["insufficient_sample"] else "—"
+            lines.append(f"| {card_id} ({', '.join(card['families'])}) | {card['assignments']} | {game_wins} | {round_wins} | {completed_rounds} | {card['eliminations']} | {mean_turns} | {sample_note} |")
         lines.append("")
     paired = records["paired_variant_comparisons"]
     if paired:

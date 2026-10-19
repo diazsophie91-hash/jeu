@@ -39,21 +39,34 @@ class PlayerRun:
     player_id: str
     position: int
     round_number: int
-    first_player: bool
+    started_game: bool
     round_starter_id: str
     card_id: str
     defeat_families: tuple[str, ...]
     victory_condition: str | None
     decision_profile: str
     communication_profile: str
-    result: str
-    eliminated: bool
-    elimination_turn: int | None
-    elimination_game_turn: int | None
-    elimination_reason: str | None
-    turns_played: int
-    final_score: int
-    credited_eliminations: int
+    round_result: str | None
+    round_completed: bool | None
+    game_result: str
+    game_player_result: str
+    round_eliminated: bool
+    round_elimination_turn: int | None
+    round_elimination_game_turn: int | None
+    round_elimination_reason: str | None
+    round_turns_played: int
+    round_score: int | None
+    round_credited_eliminations: int | None
+    game_final_score: int | None
+    game_final_credited_eliminations: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class RoundRun:
+    round_number: int
+    winner_id: str | None
+    scores: dict[str, int]
+    credited_eliminations: dict[str, int]
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +102,9 @@ class GameRun:
     players: tuple[PlayerRun, ...] = ()
     agent_seeds: dict[str, dict[str, int]] = field(default_factory=dict)
     rounds_completed: int = 0
+    round_summaries: tuple[RoundRun, ...] = ()
+    final_scores: dict[str, int | None] = field(default_factory=dict)
+    final_credited_eliminations: dict[str, int | None] = field(default_factory=dict)
 
     @property
     def message_counts(self) -> dict[str, int]:
@@ -160,7 +176,8 @@ def _round_snapshot(game, round_number, starter_id, player_ids):
         if player.id in player_ids)
 
 
-def _player_results(game, snapshots, first_player_id, strategies, outcome, winners, initial_turns):
+def _player_results(game, snapshots, first_player_id, strategies, outcome, winners,
+                    round_summaries, final_scores, final_credited_eliminations):
     events = tuple(game._state.events)
     result = []
     for snapshot in snapshots:
@@ -175,37 +192,51 @@ def _player_results(game, snapshots, first_player_id, strategies, outcome, winne
         else:
             turns_played = sum(event.sequence <= elimination.sequence
                                and event.data.get("donor_id") == player_id for event in proposals)
-        if elimination is not None:
-            player_result = "eliminated"
-        elif outcome == "terminal_tie":
-            player_result = "tied"
+        if outcome == "terminal_tie":
+            game_player_result = "tied"
         elif player_id in winners:
-            player_result = "shared_winner" if len(winners) > 1 else "winner"
+            game_player_result = "shared_winner" if len(winners) > 1 else "winner"
         else:
-            player_result = "non_winner"
+            game_player_result = "non_winner"
         card = snapshot["card"]
-        state_player = game._state.player(player_id)
+        round_summary = round_summaries.get(round_number)
+        if game._state.config.mode.value == "C" and round_summary is not None:
+            round_result = "round_winner" if round_summary.winner_id == player_id else "round_non_winner"
+            round_completed = True
+        elif game._state.config.mode.value == "C":
+            round_result = None
+            round_completed = False
+        else:
+            # Modes A and B have no separate round-winner concept.
+            round_result = None
+            round_completed = None
         result.append(PlayerRun(
             player_id=player_id,
             position=snapshot["position"],
             round_number=round_number,
-            first_player=(round_number == 1 and player_id == first_player_id),
+            started_game=(player_id == first_player_id),
             round_starter_id=snapshot["round_starter_id"],
             card_id=card.id,
             defeat_families=tuple(condition.kind.value for condition in card.defeat_conditions),
             victory_condition=repr(card.victory) if card.victory is not None else None,
             decision_profile=strategies[player_id][0],
             communication_profile=strategies[player_id][1],
-            result=player_result,
-            eliminated=elimination is not None,
-            elimination_turn=(sum(event.kind == "gift_proposed" and event.sequence <= elimination.sequence
+            round_result=round_result,
+            round_completed=round_completed,
+            game_result=outcome,
+            game_player_result=game_player_result,
+            round_eliminated=elimination is not None,
+            round_elimination_turn=(sum(event.kind == "gift_proposed" and event.sequence <= elimination.sequence
                                   for event in round_events) if elimination is not None else None),
-            elimination_game_turn=(sum(event.kind == "gift_proposed" and event.sequence <= elimination.sequence
-                                       for event in events) if elimination is not None else None),
-            elimination_reason=elimination.data.get("reason") if elimination is not None else None,
-            turns_played=turns_played,
-            final_score=state_player.score,
-            credited_eliminations=state_player.credited_eliminations,
+            round_elimination_game_turn=(sum(event.kind == "gift_proposed" and event.sequence <= elimination.sequence
+                                             for event in events) if elimination is not None else None),
+            round_elimination_reason=elimination.data.get("reason") if elimination is not None else None,
+            round_turns_played=turns_played,
+            round_score=round_summary.scores.get(player_id) if round_summary else None,
+            round_credited_eliminations=(round_summary.credited_eliminations.get(player_id)
+                                         if round_summary else None),
+            game_final_score=final_scores[player_id],
+            game_final_credited_eliminations=final_credited_eliminations[player_id],
         ))
     return tuple(result)
 
@@ -250,6 +281,7 @@ def run_game(
               for pid in ids}
     channel = CommunicationChannel(game)
     observed_proposals: set[int] = set()
+    round_summaries = {}
     actions = 0
     snapshots = list(_round_snapshot(game, 1, first_player_id, set(ids)))
     round_starters = {1: first_player_id}
@@ -294,6 +326,15 @@ def run_game(
             except Exception as exc:
                 raise SimulationError(f"Échec d'action pour {actor!r} en phase {game.phase.value}.") from exc
             actions += 1
+            for event in game._state.events:
+                if event.kind == "round_finished" and event.round_number not in round_summaries:
+                    round_summaries[event.round_number] = RoundRun(
+                        round_number=event.round_number,
+                        winner_id=event.data.get("winner_id"),
+                        scores=dict(event.data["scores"]),
+                        credited_eliminations={p.id: p.credited_eliminations
+                                               for p in game._state.players},
+                    )
             game.assert_invariants()
     except SimulationError:
         raise
@@ -313,8 +354,13 @@ def run_game(
     events = tuple(game._state.events)
     first_player_event = next(event for event in game.public_event_history()
                               if event.kind == "first_player_selected")
+    scoring_mode = game._state.config.mode.value == "C"
+    final_scores = {p.id: (p.score if scoring_mode else None) for p in game._state.players}
+    final_credited_eliminations = {
+        p.id: (p.credited_eliminations if scoring_mode else None) for p in game._state.players}
     player_results = _player_results(game, snapshots, first_player_id, strategies,
-                                    public.result or "unknown", public.winners, 0)
+                                    public.result or "unknown", public.winners, round_summaries,
+                                    final_scores, final_credited_eliminations)
     score_tiebreaks = sum(event.kind == "tiebreak_required" for event in events)
     terminal_ties = sum(event.kind == "game_finished" and event.data.get("result") == "terminal_tie"
                         for event in events)
@@ -340,6 +386,9 @@ def run_game(
         players=player_results,
         agent_seeds=agent_seeds,
         rounds_completed=game._state.rounds_completed,
+        round_summaries=tuple(round_summaries[key] for key in sorted(round_summaries)),
+        final_scores=final_scores,
+        final_credited_eliminations=final_credited_eliminations,
     )
 
 
