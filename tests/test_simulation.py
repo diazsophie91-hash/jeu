@@ -1,3 +1,6 @@
+import csv
+import json
+
 import pytest
 
 from agents import (ColorClaimCommunication, ScriptedCommunication, ScriptedDecision,
@@ -6,7 +9,9 @@ from engine.actions import AcceptGift, ChooseRecipient, ProposeGift
 from engine.transitions import GameEngine
 from engine.selection import FirstPlayerMethod, select_first_player
 from rules import Card, Condition, ConditionKind, GameConfig, GameMode, Succession
-from simulation import AgentPolicy, SimulationError, SimulationLimitError, run_campaign, run_game, summarize
+from simulation import (AgentPolicy, CampaignRun, SimulationError, SimulationLimitError,
+                        run_campaign, run_game, summarize)
+from simulation.reporting import write_campaign
 
 
 def quick_config(*, succession=Succession.REPLAY_RESPONSIBLE, donor_check=False,
@@ -61,7 +66,7 @@ def test_t79_run_game_preserves_first_player_selection_audit(method, selection_k
         assert run.first_player_event.data["resolution"] != "direct"
 
 
-def test_mode_c_terminal_tie_runs_through_real_runner_without_round_awards():
+def test_mode_c_terminal_tie_runs_through_real_runner_stats_and_exports(tmp_path):
     class GiveRedAndAccept:
         name = "give_red_and_accept"
 
@@ -92,6 +97,10 @@ def test_mode_c_terminal_tie_runs_through_real_runner_without_round_awards():
 
     assert run.outcome == "terminal_tie"
     assert run.winners == () and run.terminal_ties == 1
+    assert run.event_counts["game_finished"] == 1
+    assert run.event_counts.get("round_finished", 0) == 0
+    assert run.event_counts.get("point_awarded", 0) == 0
+    assert run.event_counts.get("round_bonus", 0) == 0
     assert run.actions == 3  # choose recipient, propose, accept
     assert run.rounds_completed == 0 and run.round_summaries == ()
     assert run.final_scores == {"a": 0, "b": 0}
@@ -101,6 +110,56 @@ def test_mode_c_terminal_tie_runs_through_real_runner_without_round_awards():
     assert all(player.round_completed is False and player.round_result is None
                and player.round_score is None and player.round_credited_eliminations is None
                for player in run.players)
+
+    campaign = CampaignRun((run,), parameters={"experience_name": "terminal-tie-integration"})
+    stats = summarize(campaign)
+    summary = stats.by_configuration["default"]
+    assert summary["games_completed"] == 1
+    assert summary["outcomes"] == {"terminal_tie": 1}
+    assert summary["terminal_tie_games"] == 1
+    assert summary["shared_victory_games"] == 0
+    assert summary["winner_appearances"] == {}
+    assert summary["players_observed"] == 2
+    assert all(card["round_wins_by_carrier"] == 0
+               and card["round_win_denominator"] == 0
+               for card in summary["cards"].values())
+
+    output = write_campaign(campaign, stats, tmp_path / "terminal-tie-export")
+    with (output / "players.csv").open(encoding="utf-8", newline="") as stream:
+        players = list(csv.DictReader(stream))
+    with (output / "games.csv").open(encoding="utf-8", newline="") as stream:
+        games = list(csv.DictReader(stream))
+    with (output / "summary.csv").open(encoding="utf-8", newline="") as stream:
+        summaries = list(csv.DictReader(stream))
+    saved = json.loads((output / "summary.json").read_text(encoding="utf-8"))
+    report = (output / "report.md").read_text(encoding="utf-8")
+
+    assert len(players) == 2
+    assert {row["game_result"] for row in players} == {"terminal_tie"}
+    assert {row["game_player_result"] for row in players} == {"tied"}
+    assert {row["round_eliminated"] for row in players} == {"True"}
+    assert {row["round_completed"] for row in players} == {"False"}
+    assert all(row["round_result"] == "" and row["round_score"] == ""
+               and row["round_credited_eliminations"] == "" for row in players)
+    assert len(games) == 1
+    assert games[0]["status"] == "completed" and games[0]["game_result"] == "terminal_tie"
+    assert json.loads(games[0]["winners_json"]) == []
+    assert json.loads(games[0]["game_final_scores_json"]) == {"a": 0, "b": 0}
+    assert json.loads(games[0]["game_final_credited_eliminations_json"]) == {"a": 0, "b": 0}
+    assert json.loads(games[0]["round_summaries_json"]) == []
+    assert json.loads(games[0]["event_counts_json"]) == run.event_counts
+    assert int(games[0]["rounds_completed"]) == 0 and int(games[0]["terminal_ties"]) == 1
+    assert len(summaries) == 1
+    assert int(summaries[0]["games_completed"]) == 1
+    assert int(summaries[0]["terminal_tie_games"]) == 1
+    assert int(summaries[0]["player_round_observations"]) == 2
+    assert int(summaries[0]["game_final_score_observations"]) == 2
+    assert int(summaries[0]["round_end_score_observations"]) == 0
+    assert saved["statistics"]["by_configuration"]["default"]["winner_appearances"] == {}
+    assert saved["completed_games"][0]["event_counts"] == run.event_counts
+    assert saved["completed_games"][0]["round_summaries"] == []
+    assert "égalités terminales : 1" in report
+    assert "victoires partagées : 0" in report
 
 
 def test_t10_t63_agents_execute_spontaneous_question_lie_response_and_silence_strategies():

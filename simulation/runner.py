@@ -105,6 +105,7 @@ class GameRun:
     round_summaries: tuple[RoundRun, ...] = ()
     final_scores: dict[str, int | None] = field(default_factory=dict)
     final_credited_eliminations: dict[str, int | None] = field(default_factory=dict)
+    event_counts: dict[str, int] = field(default_factory=dict)
 
     @property
     def message_counts(self) -> dict[str, int]:
@@ -389,6 +390,7 @@ def run_game(
         round_summaries=tuple(round_summaries[key] for key in sorted(round_summaries)),
         final_scores=final_scores,
         final_credited_eliminations=final_credited_eliminations,
+        event_counts=dict(Counter(event.kind for event in events)),
     )
 
 

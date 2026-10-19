@@ -1,8 +1,8 @@
-# Audit d’implémentation — règles Version 66
+# Audit d’implémentation — règles Versions 66 et 67
 
 ## Périmètre et état de départ
 
-Référence : `C'est cadeau !.docx`, version 66 (« règles de succession et cas terminaux harmonisés »), lu pour les règles et décisions des sections 3 à 7, 10.1, 11, 12 et 14. Dépôt `C:\jeu`, branche `main`, commit de départ `bc7b2393d4838568f9b88e6e7f466660512693b4`. L’arbre de travail était propre avant audit. Aucun commit ni push n’a été effectué.
+Référence de l’audit initial : `C'est cadeau !.docx`, version 66 (« règles de succession et cas terminaux harmonisés »), lue pour les règles et décisions des sections 3 à 7, 10.1, 11, 12 et 14. La contradiction de succession B identifiée lors de cet audit a été clarifiée dans le document en version 67. Dépôt `C:\jeu`, branche `main`, commit de départ de l’audit initial `bc7b2393d4838568f9b88e6e7f466660512693b4`; commit de départ de la clarification `a43639e37bcfe3af6851cf059ab0a9e0daa63c8b`. L’arbre de travail était propre avant chaque intervention. Aucun commit ni push n’a été effectué.
 
 Les résultats des configurations de simulation préexistantes dans `reports/simulations/` ont été conservés. Le statut « décision ouverte » désigne une variante ou un paramètre que le document ne fixe pas comme règle finale.
 
@@ -34,13 +34,17 @@ Le test `test_mode_c_terminal_tie_runs_through_real_runner_without_round_awards`
 
 La trace réelle exécute trois actions (choisir le destinataire, proposer le jeton, accepter). Le donneur est éliminé au retrait ; le destinataire reçoit le jeton et est éliminé à son tour. L’événement `game_finished` donne le résultat `terminal_tie` (reflété par `run.terminal_ties == 1`), aucun gagnant, aucun résumé/achèvement de manche, zéro score et compteur final nul pour les deux joueurs. Les lignes joueur indiquent `tied`, sans victoire ni score fictif de manche.
 
-## Chaîne terminale B : conflit normatif restant
+## Clarification Version 67 : succession B
 
-Le test existant `test_variant_b_stops_at_last_survivor_and_awards_expected_points_and_bonus` suit de vraies actions (choix, proposition, acceptation) et valide l’arrêt au dernier survivant après les éliminations forcées intermédiaires créditées. Le cas supplémentaire demandé — conserver les points puis éliminer aussi le dernier survivant — est incompatible avec la priorité de la section 4.4, qui termine la manche/partie lorsqu’il ne reste qu’un joueur avant toute nouvelle élimination. La section 7 et des formulations du registre évoquent pourtant une chaîne finissant à zéro survivant. Il faut clarifier le document : soit le dernier survivant termine la séquence (aucune égalité terminale de chaîne), soit une chaîne peut continuer à éliminer ce dernier survivant (égalité possible). Jusqu’à résolution, le moteur conserve l’ordre explicite de la section 4.4 et aucun test de scénario impossible n’est ajouté.
+La version 66 associait l’arrêt de succession au dernier survivant avec des passages autorisant une chaîne B à éliminer ensuite ce dernier joueur. La clarification normative intégrée en version 67 donne priorité à l’ordre détaillé de la section 4.4 : égalité à zéro joueur, seuil de manche C, dernier survivant, puis poursuite seulement si plusieurs joueurs restent sans fin immédiate. Une chaîne B ne peut donc pas éliminer le dernier survivant. Les points validés lors d’actions initiales précédentes restent acquis. Les sections 4.1 à 4.4, 5, 6.3, 7, 10.1, 11 et 14, ainsi que les entrées correspondantes du registre, ont été harmonisées. L’égalité terminale de l’action initiale reste distincte de l’égalité au score de C1/C2.
+
+Le test `test_variant_b_stops_at_last_survivor_and_awards_expected_points_and_bonus` couvre une séquence d’actions réelle et vérifie l’arrêt au dernier survivant après les éliminations forcées. Les tests de seuil vérifient l’autre fin immédiate prioritaire. Aucun test ne prétend qu’une chaîne B puisse éliminer son dernier survivant.
+
+Le test `test_mode_c_terminal_tie_runs_through_real_runner_stats_and_exports` joue une vraie partie déterministe avec `run_game` (graine 1), puis transmet son résultat à `summarize` et `write_campaign`. Il vérifie le seul événement `game_finished` d’égalité, l’absence d’événement `round_finished`, de points et de bonus, deux lignes joueur-manche sans score/résultat de manche, une partie sans gagnant, les compteurs de `summary.csv` et `summary.json`, et la distinction égalité terminale/victoire partagée dans `report.md`. `games.csv` inclut désormais `event_counts_json` afin de vérifier les événements du moteur sans exporter leur contenu privé.
 
 ## Décisions et paramètres encore ouverts
 
-Conformément aux sections 7, 8, 11 et 12, restent à choisir/équilibrer : configuration du sac et nombre de joueurs, seuils et formulations finales des cartes, paquet final, objectifs de victoire, seuils C, couleur dangereuse exacte/minimale, certaines règles de deux paires/majorité, pouvoirs secrets, visibilité des pioches et variantes de succession/contrôle du donneur. Les valeurs de `simulation/experiments.py` restent expérimentales. L’incohérence terminale B ci-dessus est également à trancher dans la source de règles.
+Conformément aux sections 7, 8, 11 et 12, restent à choisir/équilibrer : configuration du sac et nombre de joueurs, seuils et formulations finales des cartes, paquet final, objectifs de victoire, seuils C, couleur dangereuse exacte/minimale, certaines règles de deux paires/majorité, pouvoirs secrets, visibilité des pioches et variantes de succession/contrôle du donneur. Les valeurs de `simulation/experiments.py` restent expérimentales. La clarification des fins B est désormais établie en version 67.
 
 ## Fichiers modifiés
 
@@ -49,5 +53,8 @@ Conformément aux sections 7, 8, 11 et 12, restent à choisir/équilibrer : conf
 - `engine/transitions.py` : utilise la même distribution vérifiée au début des manches suivantes.
 - `tests/test_regressions_point2.py` : composition exacte/minimale et chevauchement.
 - `tests/test_setup.py` : démontre qu’une graine aléatoire défavorable ne fait pas échouer une configuration faisable.
-- `tests/test_simulation.py` : égalité C atteinte par le runner et transitions réelles.
-- `specifications/audit_implementation_version66.md` : matrice, constats, résultats attendus du scénario et limite normative.
+- `tests/test_simulation.py` : égalité C produite par le runner puis vérifiée dans les statistiques et cinq exports.
+- `simulation/runner.py` : compteurs d’événements non privés dans le résultat de simulation.
+- `simulation/reporting.py` : colonne `event_counts_json` dans `games.csv` et définition de la mesure dans le rapport.
+- `C'est cadeau !.docx` : version 67, clarification de la succession B et mise à jour des sections et du registre concernés.
+- `specifications/audit_implementation_version66.md` : matrice initiale version 66 et addendum de conformité à la clarification version 67.

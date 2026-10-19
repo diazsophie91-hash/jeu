@@ -191,6 +191,7 @@ def write_campaign(campaign, statistics, output_dir):
             "game_final_scores_json": json.dumps(run.final_scores),
             "game_final_credited_eliminations_json": json.dumps(run.final_credited_eliminations),
             "round_summaries_json": json.dumps(to_jsonable(run.round_summaries), ensure_ascii=False),
+            "event_counts_json": json.dumps(run.event_counts, ensure_ascii=False),
             "terminal_ties": run.terminal_ties, "score_ties": run.score_ties,
             "score_tiebreaks": run.score_tiebreaks,
             "messages": len(run.messages), "message_types_json": json.dumps(run.message_counts),
@@ -214,7 +215,7 @@ def write_campaign(campaign, statistics, output_dir):
                     "player_count", "strategies_json", "communication_modes_json", "actions", "gifts_proposed",
                     "agent_seeds_json", "rounds_played", "rounds_completed", "game_result", "winners_json",
                     "game_final_scores_json", "game_final_credited_eliminations_json", "round_summaries_json",
-                    "terminal_ties", "score_ties",
+                    "event_counts_json", "terminal_ties", "score_ties",
                     "score_tiebreaks", "messages",
                     "message_types_json", "duration_seconds", "diagnostic"]
     _csv_write(output / "games.csv", game_rows, game_columns)
@@ -240,7 +241,7 @@ def write_campaign(campaign, statistics, output_dir):
         f"Campagne UTC : {generated_at}", f"Révision Git : {records['git_revision'] or 'indisponible'}", "",
         f"Arbre de travail modifié : {records['git']['working_tree_dirty']}; empreinte des sources : {records['git']['source_fingerprint_sha256']}", "",
         "## Définition des mesures", "",
-        "`actions` compte les commandes légales soumises au moteur; `gifts_proposed` compte les propositions de cadeau; `rounds_played` compte les manches commencées. `players.csv` contient une observation par joueur-manche : élimination, motif, tours et carte sont ceux de cette manche. `round_score` et `round_credited_eliminations` ne sont renseignés que lorsqu'un événement `round_finished` existe, et sont capturés à cet événement. `game_result`, `game_player_result`, `game_final_score` et `game_final_credited_eliminations` décrivent la partie complète, jamais une manche. Les modes A et B ne définissent pas de gagnant distinct de manche; les victoires de porteur par carte y sont des victoires de partie, une partie comportant une seule manche selon les transitions actuelles du moteur. En mode C, les victoires de partie par carte sont non applicables; les victoires par carte sont comptées uniquement à partir des gagnants explicites des événements de fin de manche. Une manche C terminée directement par une égalité terminale n'a ni résultat ni score de fin de manche enregistré.", "",
+        "`actions` compte les commandes légales soumises au moteur; `gifts_proposed` compte les propositions de cadeau; `rounds_played` compte les manches commencées. `players.csv` contient une observation par joueur-manche : élimination, motif, tours et carte sont ceux de cette manche. `round_score` et `round_credited_eliminations` ne sont renseignés que lorsqu'un événement `round_finished` existe, et sont capturés à cet événement. `game_result`, `game_player_result`, `game_final_score` et `game_final_credited_eliminations` décrivent la partie complète, jamais une manche. `event_counts_json` dans `games.csv` rapporte les nombres d'événements du moteur sans exposer leur contenu privé. Les modes A et B ne définissent pas de gagnant distinct de manche; les victoires de porteur par carte y sont des victoires de partie, une partie comportant une seule manche selon les transitions actuelles du moteur. En mode C, les victoires de partie par carte sont non applicables; les victoires par carte sont comptées uniquement à partir des gagnants explicites des événements de fin de manche. Une manche C terminée directement par une égalité terminale n'a ni résultat ni score de fin de manche enregistré.", "",
         "Les proportions indiquent leur dénominateur et un intervalle de Wilson à 95 %. Les intervalles des moyennes utilisent une approximation normale à 1,96 erreur standard. Les différences de variantes sont appariées par graine et utilisent un intervalle normal approximatif. Ces résumés sont descriptifs et ne démontrent pas de causalité.", "",
         "## Résultats par configuration et profil", "",
     ]
